@@ -117,7 +117,9 @@ namespace eval IxiaFH {
 	}
 
 	proc instrument_info_load {args} {
+       Logto -info "----- TAG: instrument_info_load -----"
        Login
+       Logto -info "Succeed to login"
 	}
 
 	proc instrument_config_init {args} {
@@ -141,7 +143,7 @@ namespace eval IxiaFH {
 		}
 		
 		Login
-		
+		Logto -info "Succeed to login"
 		set deviceList ""
 		set hostlist ""
 		if { [ info exists configfile ] } {
@@ -155,8 +157,8 @@ namespace eval IxiaFH {
 	}
 
     proc nstype { namelist } {
-        set tag "nstype [info script]"
-		Logto -info "----- TAG: $tag -----"
+        #set tag "nstype [info script]"
+		#Logto -info "----- TAG: $tag -----"
         set newlist {}
         foreach na $namelist {
             lappend newlist "::IxiaFH::$na"
@@ -168,6 +170,7 @@ namespace eval IxiaFH {
 	proc port_reserve {args} {
 		set tag "port_reserve "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"	
 		set offline 0
 		global loadflag
         global errNumber
@@ -230,6 +233,7 @@ namespace eval IxiaFH {
                             $portn Connect $hw_id NULL 0 $port_handle
                         }
 						incr index
+                        
 					} else {
 						error "$errNumber(2) :hw_id_org:$hw_id_org"
 					}
@@ -265,7 +269,7 @@ namespace eval IxiaFH {
 	proc port_create {args} {
 		set tag "port_create "
 		Logto -info "----- TAG: $tag -----"
-
+        Logto -info "args: $args"
 		set port_type ethernetcooper
         global errNumber
 		global portlist
@@ -322,7 +326,7 @@ namespace eval IxiaFH {
 			
 			
 				if {[regexp {^//(.+)} $port_location b hw_id] == 1} {				
-				Logto -info "hw_id:$hw_id"			
+				Logto -info "online: hw_id:$hw_id; portname: $portn; port_type: $port_type "			
 					Port $portn $hw_id $port_type 						   
 				} else {
 					error "$errNumber(2) :hw_id:$hw_id"
@@ -344,6 +348,7 @@ namespace eval IxiaFH {
 	proc port_config { args } {
 		set tag "port_config "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global fhportlist
         global errNumber
 				
@@ -449,6 +454,7 @@ namespace eval IxiaFH {
 	proc traffic_start { args } {
 		set tag "traffic_start "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global fhportlist
 		global trafficnamelist
         global trafficlist
@@ -619,7 +625,7 @@ namespace eval IxiaFH {
             # puts $item			
                 # ixNet exec generate $item
             # }
-            
+            Logto -info "generate flow"
             ixNet exec generate $txItemList
 			
 			if { $regenerate } { 
@@ -677,7 +683,7 @@ namespace eval IxiaFH {
             ixNet exec apply $root/traffic
             after 3000
             
-   
+            Logto -info "arp learning "
             #ixNet exec start $root/traffic
 			ixNet exec startStatelessTraffic $txList
 			set timeout 30
@@ -734,11 +740,13 @@ namespace eval IxiaFH {
 			Tester::start_traffic 1 1
 			return 1
 		}
+        Logto -info "succeed to start traffic"
 	}
 
 	proc traffic_stop { args } {
 		set tag "traffic_stop "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global fhportlist
 		global trafficnamelist
         global errNumber
@@ -797,11 +805,13 @@ namespace eval IxiaFH {
 		} else {
 			Tester::stop_traffic
 		}
+        Logto -info "succeed to stop traffic"
 	}
 
 	proc results_get { args } {
 		set tag "results_get "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global fhportlist
 		global trafficnamelist
         global errNumber
@@ -968,6 +978,7 @@ namespace eval IxiaFH {
 		Logto -info "----- TAG: $tag -----"
 		ixNet exec clearStats
 		ixNet exec closeAllTabs
+        Logto -info "succeed to clean result"
 		return 1
 	}
 
@@ -1000,14 +1011,14 @@ namespace eval IxiaFH {
 		set fhportlist ""
 		set deviceList ""
 		Tester::cleanup -release_port 1
-		
+		Logto -info "succeed to cleanup"
 		return 1
 	}
 
 	proc traffic_rate_set { args } {
 		set tag "traffic_rate_set "
 		Logto -info "----- TAG: $tag -----"
-		
+		Logto -info "args: $args"
 		global fhportlist
         global errNumber
 		
@@ -1074,7 +1085,7 @@ namespace eval IxiaFH {
 			# set root [ixNet getRoot]
 		    # ixNet exec apply $root/traffic
 		    # after 1000
-
+            Logto -info "succeed to set the traffic rate"
 			return 1
 		}
 		
@@ -1082,6 +1093,7 @@ namespace eval IxiaFH {
 	proc traffic_create {args} {
 		set tag "traffic_create "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global headindex
         global errNumber
 		global fhportlist
@@ -1095,13 +1107,14 @@ namespace eval IxiaFH {
 		set arg [lindex $args 0]
 		set flag [llength $arg]
 		puts $flag
-		if {$flag==1} {
+		if {$flag == 1} {
 		    set len 1
 		    set arg $args
 		}
 		puts $arg
 		for {set i 0} {$i < $len} {incr i} {
 		    set flag 0
+            Logto -info "arg: $arg"
 		    foreach { key value } $arg {
 			    set key [string tolower $key]
 			    switch -exact -- $key {
@@ -1127,14 +1140,15 @@ namespace eval IxiaFH {
 			    if {[llength $rxportlist] == 1} {
 				  set rxportlist [ lindex $rxportlist 0 ]
 				  if { $trafficinfo== {} } {
-				    puts "trafficinfo is empty"
+				    Deputs "trafficinfo is empty"
 				    Flow $tname $portn 
 					$tname config -rcv_ports $rxportlist 
 					set thandle [$tname cget -hTraffic]
 					set fhandle [$tname cget -handle]
 					lappend trafficinfo [list $thandle $portn $rxportlist ]
 					lappend flownamelist $tname
-					lappend flowlist $fhandle 				
+					lappend flowlist $fhandle 
+			
 					traffic_config -name $name -srcmac 00:00:94:00:00:02 -dstmac 00:00:01:00:00:01 -srcip 192.85.1.2  -dstip 192.0.0.1 
 				  } else {
 				   
@@ -1148,24 +1162,24 @@ namespace eval IxiaFH {
 						}
 					}
 					if { $thandle == "" } {
-				       puts "trafficinfo is not matched"
+				       Deputs "trafficinfo is not matched"
 					   Flow $tname $portn 
 					   $tname config -rcv_ports $rxportlist
 					   set thandle [$tname cget -hTraffic]
 					   set fhandle [$tname cget -handle]
 					   lappend trafficinfo [list $thandle $portn $rxportlist ] 
 					   lappend flownamelist $tname
-					   lappend flowlist $fhandle 			   
+					   lappend flowlist $fhandle                       					   
 					   traffic_config -name $name -srcmac 00:00:94:00:00:02 -dstmac 00:00:01:00:00:01 -srcip 192.85.1.2  -dstip 192.0.0.1
 					} else {
-				       puts "trafficinfo get thandle :$thandle"
+				       Deputs "trafficinfo get thandle :$thandle"
 					   Flow $tname $portn "NULL" $thandle 
 					   $tname config -rcv_ports $rxportlist
 					   set fhandle [$tname cget -handle]
-					   puts "fhandle:$fhandle"
+					   Deputs "fhandle:$fhandle"
 					   lappend flownamelist $tname
 					   lappend flowlist $fhandle
-					   puts $name				   
+					   Deputs $name				   
 					   traffic_config -name $name -srcmac 00:00:94:00:00:02 -dstmac 00:00:01:00:00:01 -srcip 192.85.1.2  -dstip 192.0.0.1 
 					}
 				  }
@@ -1194,8 +1208,8 @@ namespace eval IxiaFH {
                 lappend trafficlist [$tname cget -handle]
 				
 			}		
-			 			
-		    after 15000 
+			Logto -info "Succeed to create traffic $tname" 			
+		    #after 15000 
             if {$flag == 1 } {		
 			    eval traffic_config $arg
 			}
@@ -1209,22 +1223,24 @@ namespace eval IxiaFH {
 	proc device_create {args} {
 		set tag "device_create "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
         global errNumber
 		global deviceList
 		global hostlist
         set len [llength $args]
-		puts $len
+	
 		set arg [lindex $args 0]
 		set flag [llength $arg]
-		puts $flag
+		
 		if {$flag == 1} {
 		    set len 1
 		    set arg $args
 		}
-		puts $arg
+		
 		puts "len: $len"
 		for {set i 0} {$i < $len} { incr i } {
 		    set flag 0
+            Logto -info "arg: $arg"
 		    foreach { key value } $arg {
 			    set key [string tolower $key]
 			    switch -exact -- $key {
@@ -1309,7 +1325,20 @@ namespace eval IxiaFH {
 					$lastName config -sys_id $sys_id -network_type broadcast -metric 1 -hello_interval 10 -dead_interval 30 -max_lspsize 1492 -lsp_refresh 900 -isis_id $isisID
 					lappend deviceList $lastName
 				}
-				device.isis.isis_ipv4route {
+				device.isis.isis_lsp {
+					set isisInt     [ $hostName cget -handle    ]
+					puts "isisInt: $isisInt"
+					set isisID      [ $hostName cget -ipv4Addr  ]
+					set session [ lindex [split $name "."] 1 ]
+					set session [ ::IxiaFH::nstype $session  ] 
+					puts "session:$session"
+					$hostName SetSession $session
+					set sys_id      [ $hostName cget -macAddr ]
+					puts "macAddr:$sys_id"
+					
+					lappend deviceList $lastName
+				}
+				device.isis.isis_lsp.isis_ipv4route {
 					set UpDevice [ lindex [split $name "."] 1 ]
 					set UpDevice [ ::IxiaFH::nstype $UpDevice   ]
 					puts "UpDevice:$UpDevice"
@@ -1318,7 +1347,7 @@ namespace eval IxiaFH {
 					$lastName config -active 1 -route_type internal -route_count 1 -start_ip 192.0.1.0 -prefix_len 24 -metric_route 1
 					$UpDevice set_route -route_block $lastName
 				}
-				device.isis.isis_ipv6route {
+				device.isis.isis_lsp.isis_ipv6route {
 					set UpDevice [ lindex [split $name "."] 1 ]
 					set UpDevice [ ::IxiaFH::nstype $UpDevice   ]
 					puts "UpDevice:$UpDevice"
@@ -1439,6 +1468,7 @@ namespace eval IxiaFH {
 					error "$errNumber(3) key:$key value:$value"
 				}	           
 			}
+            Logto -info "Succeed to create $obj_type object: $lastName under Port object: $portn"
 			if { $flag } {
 			    device_config  $arg
 			}		
@@ -1456,6 +1486,7 @@ namespace eval IxiaFH {
 	proc device_config { args } {
 		set tag "device_config "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
         global errNumber
 		global loadflag
         set len [llength $args]
@@ -1471,6 +1502,7 @@ namespace eval IxiaFH {
 		for {set j 0} { $j < $len } { incr j } {
 		    set args_value_pairs ""
 			set obj_name ""
+            Logto -info "arg: $arg"
 		    foreach { key value } $arg {
 			    set key [string tolower $key]
 			    switch -exact -- $key {
@@ -1526,10 +1558,14 @@ namespace eval IxiaFH {
 					device.isis {
 						eval $dname config $args_value_pairs
 					}
+					isis_lsp -
+					device.isis.isis_lsp {
+						
+					}
 					isis_ipv4route -
-					device.isis.isis_ipv4route -
+					device.isis.isis_lsp.isis_ipv4route -
 					isis_ipv6route -
-					device.isis.isis_ipv6route {
+					device.isis.isis_lsp.isis_ipv6route {
 						eval $dname config $args_value_pairs
 						set UpDevice [ $dname cget -up_device ]
 						puts "UpDevice:$UpDevice"
@@ -1589,6 +1625,7 @@ namespace eval IxiaFH {
 						error "$errNumber(3) key:$key value:$value"
 					}					
 				}
+                Logto -info "succeed to config device $dname"
 			} elseif  { $loadflag } {
 				set devicelist   [ split $obj_name  _ ]
 				set portname     [ lindex $devicelist 0 ]
@@ -1731,7 +1768,7 @@ namespace eval IxiaFH {
 						}                
 					}
 				}		   
-
+                Logto -info "succeed to config device $obj_name"
 			}
 			
 			
@@ -1747,6 +1784,7 @@ namespace eval IxiaFH {
 	proc traffic_config { args } {
 		set tag "traffic_config "
 		Logto -info "----- TAG: $tag -----"	
+        Logto -info "args: $args"
 		global headindex
         global errNumber
 		global flownamelist
@@ -1762,11 +1800,12 @@ namespace eval IxiaFH {
 		puts $len
 		set arg [lindex $args 0]
 		set flag [llength $arg]
-		if {$flag==1} {
+		if {$flag == 1} {
 			set len 1
 			set arg $args
 		}
 		for {set i 0} {$i < $len} {incr i} {
+            Logto -info "arg: $arg"	
 			foreach { key value } $arg {
 				set key [string tolower $key]
 				switch -exact -- $key {
@@ -2306,6 +2345,8 @@ namespace eval IxiaFH {
 				}
 				
 			}	
+            
+            Logto -info "Succeed to config traffic: $streamobj"	
 			# set root [ixNet getRoot]
 			# ixNet exec apply $root/traffic
 			# after 1000
@@ -2316,6 +2357,7 @@ namespace eval IxiaFH {
 	proc device_start { args } {
 		set tag "device_start "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"	
         global errNumber
         global fhportlist
 		global loadflag
@@ -2530,7 +2572,7 @@ namespace eval IxiaFH {
 				Tester::start_router 
 			}
 		}
-		
+		Logto -info "succeed to start router"
 		# set root [ixNet getRoot]
 		# ixNet exec apply $root/traffic
 		# after 1000
@@ -2540,6 +2582,7 @@ namespace eval IxiaFH {
 	proc device_stop { args } {
 		set tag "device_stop "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"	
         global errNumber
         global fhportlist
 		global loadflag
@@ -2781,11 +2824,13 @@ namespace eval IxiaFH {
 				# ixNet exec stop $dhandle	
 			# }
 		}
+        Logto -info "succeed to stop router"
 		
 	}
 	proc capture_start {args } {
 		set tag "capture_start "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
         global errNumber	  
 		global fhportlist  
         
@@ -2863,6 +2908,7 @@ namespace eval IxiaFH {
 	proc capture_stop_save { args } {
 		set tag "capture_stop_save "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global savecapport
         global errNumber
                
@@ -3015,6 +3061,7 @@ namespace eval IxiaFH {
     proc access_protocol_handle { args } {
 		set tag "access_protocol_handle "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -3099,6 +3146,7 @@ namespace eval IxiaFH {
     proc protocol_handle { args } {
 		set tag "protocol_handle "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -3195,6 +3243,7 @@ namespace eval IxiaFH {
     proc device_config_old { args } {
 		set tag "device_config "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber		
 		foreach { key value } $args {
@@ -3419,6 +3468,7 @@ namespace eval IxiaFH {
     proc dhcp_client_release { args } {
 		set tag "dhcp_client_release "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist
@@ -3474,6 +3524,7 @@ namespace eval IxiaFH {
     proc dhcp_stats_get { args } {
 		set tag "dhcp_stats_get "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -3569,6 +3620,7 @@ namespace eval IxiaFH {
     proc dhcp_server_start { args } {
 		set tag "dhcp_server_start "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist
@@ -3625,6 +3677,7 @@ namespace eval IxiaFH {
     proc dhcp_server_stop { args } {
 		set tag "dhcp_server_stop "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist
@@ -3681,6 +3734,7 @@ namespace eval IxiaFH {
     proc pppoe_connect { args } {
 		set tag "pppoe_connect "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist
@@ -3747,6 +3801,7 @@ namespace eval IxiaFH {
     proc pppoe_disconnect { args } {
 		set tag "pppoe_disconnect "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist
@@ -3811,6 +3866,7 @@ namespace eval IxiaFH {
     proc pppoe_stats_get { args } {
 		set tag "pppoe_stats_get "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -3981,6 +4037,7 @@ namespace eval IxiaFH {
     proc pppoe_server_stop { args } {
 		set tag "pppoe_server_stop "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist 
@@ -4046,6 +4103,7 @@ namespace eval IxiaFH {
     proc igmp_querier_start { args } {
 		set tag "igmp_querier_start "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist
@@ -4090,6 +4148,7 @@ namespace eval IxiaFH {
     proc igmp_querier_stop { args } {
 		set tag "igmp_querier_stop "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist
@@ -4134,6 +4193,7 @@ namespace eval IxiaFH {
     proc igmp_join { args } {
 		set tag "igmp_join "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist
@@ -4179,6 +4239,7 @@ namespace eval IxiaFH {
     proc igmp_leave { args } {
 		set tag "igmp_leave "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist
@@ -4224,6 +4285,7 @@ namespace eval IxiaFH {
     proc igmp_rejoin { args } {
 		set tag "igmp_rejoin "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist
@@ -4270,6 +4332,7 @@ namespace eval IxiaFH {
     proc igmp_pim_start { args } {
 		set tag "igmp_pim_start "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist
@@ -4315,6 +4378,7 @@ namespace eval IxiaFH {
     proc igmp_pim_stop { args } {
 		set tag "igmp_pim_stop "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
         global fhportlist
@@ -4364,6 +4428,7 @@ namespace eval IxiaFH {
     proc ospfv2_start { args } {
 		set tag "ospfv2_start "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4423,6 +4488,7 @@ namespace eval IxiaFH {
     proc ospfv2_stats_get { args } {
 		set tag "ospfv2_stats_get "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4462,6 +4528,7 @@ namespace eval IxiaFH {
     proc ospfv2_route_advertise { args } {
 		set tag "ospfv2_route_advertise "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4494,6 +4561,7 @@ namespace eval IxiaFH {
     proc ospfv2_route_undo { args } {
 		set tag "ospfv2_route_undo "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4526,6 +4594,7 @@ namespace eval IxiaFH {
     proc isis_start { args } {
 		set tag "isis_start "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4555,6 +4624,7 @@ namespace eval IxiaFH {
     proc isis_stop { args } {
 		set tag "isis_stop "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4584,6 +4654,7 @@ namespace eval IxiaFH {
     proc isis_stats_get { args } {
 		set tag "isis_stats_get "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4623,6 +4694,7 @@ namespace eval IxiaFH {
     proc isis_route_advertise { args } {
 		set tag "isis_route_advertise "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4655,6 +4727,7 @@ namespace eval IxiaFH {
     proc isis_route_undo { args } {
 		set tag "isis_route_undo "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4687,6 +4760,7 @@ namespace eval IxiaFH {
     proc bgp_start { args } {
 		set tag "bgp_start "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4716,6 +4790,7 @@ namespace eval IxiaFH {
     proc bgp_stop { args } {
 		set tag "bgp_stop "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4745,6 +4820,7 @@ namespace eval IxiaFH {
     proc bgp_stats_get { args } {
 		set tag "bgp_stats_get "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4784,6 +4860,7 @@ namespace eval IxiaFH {
     proc bgp_route_advertise { args } {
 		set tag "bgp_route_advertise "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4816,6 +4893,7 @@ namespace eval IxiaFH {
     proc bgp_route_undo { args } {
 		set tag "bgp_route_undo "
 		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
 		global deviceList
         global errNumber
 		
@@ -4845,6 +4923,8 @@ namespace eval IxiaFH {
         
 	}
 	proc file_save { args } {
+        Logto -info "----TAG: file_save-------"
+        Logto -info "args: $args"
 		foreach { key value } $args {
 			set key [string tolower $key]
 			switch -exact -- $key {

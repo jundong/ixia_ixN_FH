@@ -529,6 +529,7 @@ Deputs "default ip:$default_ip"
 	set flag_modify_adv	0
 	set trafficType ipv4
 	set bidirection 0
+	set regenerateflag 1
 	
     set tag "body Traffic::config [info script]"
 Deputs "----- TAG: $tag -----"
@@ -923,6 +924,8 @@ Deputs Step190
         # ixNet setA $hlHandle -name $hlName
         # ixNet commit
 		# ixNet commit
+		
+		set regenerateflag 0
        
 	   }
 		set flag_modify_adv 1
@@ -1424,7 +1427,7 @@ Deputs "src:$src"
 Deputs Step150    
     ixNet commit
 	ixNet commit
-	after 2000
+	#after 2000
 	
     if { [ info exists tx_mode ] } {
 	Deputs tx_mode
@@ -1648,9 +1651,12 @@ Deputs Step250
 	ixNet setA $handle -enabled True
 	ixNet commit
 	
-	Deputs "Step280"			
-				ixNet exec generate $handle
+	Deputs "Step280"
+        if { $regenerateflag } {
+		    ixNet exec generate $handle
 				ixNet commit
+		}	
+			
 	set hlHandle [lindex [ixNet getL  $handle highLevelStream] end ]
 	set hlName [ixNet getA $hlHandle -name]
 	set len [string length $hlName]
