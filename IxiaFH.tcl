@@ -2415,6 +2415,9 @@ namespace eval IxiaFH {
 									Logto -info "router handle $router"
 										set rinterface [ ixNet getL $router interface ]
 										set inter_handle [ixNet getA $rinterface -interfaceId ]
+										if { $inter_handle == "" || $inter_handle == "::ixNet::OBJ-null"} {
+										    continue
+										}
 										set inter_name [ ixNet getA $inter_handle -description ] 
 										if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
 											if { [regexp $predevice.* $inter_name ] } {
@@ -2434,6 +2437,9 @@ namespace eval IxiaFH {
 									foreach router $routerlist { 
 										Logto -info "router handle $router"
 										set inter_handle [ixNet getA $router -interfaces ]
+										if { $inter_handle == "" || $inter_handle == "::ixNet::OBJ-null"} {
+										    continue
+										}
 										set inter_name [ ixNet getA $inter_handle -description ] 
 										if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
 											if { [regexp $predevice.* $inter_name ] } {
@@ -2453,6 +2459,9 @@ namespace eval IxiaFH {
 										Logto -info "router handle $router"
 										set rinterface [ ixNet getL $router interface ]
 										set inter_handle [ixNet getA $rinterface -interfaces ]
+										if { $inter_handle == "" || $inter_handle == "::ixNet::OBJ-null"} {
+										    continue
+										}
 										set inter_name [ ixNet getA $inter_handle -description ] 
 										if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
 											if { [regexp $predevice.* $inter_name ] } {
@@ -2638,8 +2647,11 @@ namespace eval IxiaFH {
 									set routerlist [ ixNet getL $prothandle router ]
 									foreach router $routerlist {
 									Logto -info "router handle $router"
-										set rinterface [ ixNet getL $router interface ]
-										set inter_handle [ixNet getA $rinterface -interfaceId ]
+										set rinterface [lindex [ ixNet getL $router interface ] 0]
+										set inter_handle [lindex [ixNet getA $rinterface -interfaceId ] 0 ]
+										if { $inter_handle == "" || $inter_handle == "::ixNet::OBJ-null"} {
+										    continue
+										}
 										set inter_name [ ixNet getA $inter_handle -description ] 
 										if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
 											if { [regexp $predevice.* $inter_name ] } {
@@ -2667,7 +2679,10 @@ namespace eval IxiaFH {
 									set routerlist [ ixNet getL $prothandle neighborRange ]
 									foreach router $routerlist { 
 										Logto -info "router handle $router"
-										set inter_handle [ixNet getA $router -interfaces ]
+										set inter_handle [lindex [ixNet getA $router -interfaces ] 0]
+										if { $inter_handle == "" || $inter_handle == "::ixNet::OBJ-null"} {
+										    continue
+										}
 										set inter_name [ ixNet getA $inter_handle -description ] 
 										if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
 											if { [regexp $predevice.* $inter_name ] } {
@@ -2693,8 +2708,11 @@ namespace eval IxiaFH {
 									set routerlist [ ixNet getL $prothandle router ]
 									foreach router $routerlist {
 										Logto -info "router handle $router"
-										set rinterface [ ixNet getL $router interface ]
-										set inter_handle [ixNet getA $rinterface -interfaces ]
+										set rinterface [lindex [ ixNet getL $router interface ] 0]
+										set inter_handle [lindex [ixNet getA $rinterface -interfaces ] 0]
+										if { $inter_handle == "" || $inter_handle == "::ixNet::OBJ-null"} {
+										    continue
+										}
 										set inter_name [ ixNet getA $inter_handle -description ] 
 										if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
 											if { [regexp $predevice.* $inter_name ] } {
