@@ -2482,8 +2482,10 @@ namespace eval IxiaFH {
 							set prostate [ ixNet getA $prothandle -runningState ]
 							if { $prostate == "stopped" } {
 							Logto -info "router start $prothandle"
-							   ixNet exec start $prothandle
-							   after 5000
+							    catch {
+								   ixNet exec start $prothandle
+								   after 5000
+							    }
 							}
 							   
 						}

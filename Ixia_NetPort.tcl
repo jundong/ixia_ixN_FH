@@ -1442,14 +1442,18 @@ Deputs "stats val:$statsVal"
 	       set statitem ${fhflag}TxFrameCount
 	       lappend fhlist $statitem $statsVal
 	   }
-	   if {[info exists fhflag]} {
-	       set statitem ${fhflag}RxFrameCount
-	       lappend fhlist $statitem $statsVal
-	   }
+	   
           
         set statsItem   "total_frame_count"
         set statsVal    [ lindex $row $total_frame_count ]
 Deputs "stats val:$statsVal"
+        set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+        if {[info exists fhflag]} {
+	       set statitem ${fhflag}RxFrameCount
+	       lappend fhlist $statitem $statsVal
+	   }
+         
+
     	if { $statsVal < 1 } {
 		    set statsVal [ lindex $row $rx_data_integrity ]
 Deputs "stats val:$statsVal"
