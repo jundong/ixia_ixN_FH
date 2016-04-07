@@ -2374,6 +2374,7 @@ namespace eval IxiaFH {
 		if { $loadflag } {	
 			if {[info exists device_list] } {
 				foreach devicename $device_list {
+				    set findflag 0
 					set devicelist   [ split $devicename  _ ]
 					set portname     [ lindex $devicelist 0 ]
 					set protocoltype [ lindex $devicelist 1 ]
@@ -2422,10 +2423,12 @@ namespace eval IxiaFH {
 										if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
 											if { [regexp $predevice.* $inter_name ] } {
 												ixNet setA $router -enabled true
+												set findflag 1
 												#ixNet commit 
 											}
 										} elseif { $inter_name == $devicename } {
 											ixNet setA $router -enabled true
+											set findflag 1
 											#ixNet commit    
 											
 										}    
@@ -2444,10 +2447,12 @@ namespace eval IxiaFH {
 										if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
 											if { [regexp $predevice.* $inter_name ] } {
 												ixNet setA $router -enabled true
+												set findflag 1
 												#ixNet commit 
 											}
 										} elseif { $inter_name == $devicename } {
 											ixNet setA $router -enabled true
+											set findflag 1
 											#ixNet commit    
 											
 										}    
@@ -2466,10 +2471,12 @@ namespace eval IxiaFH {
 										if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
 											if { [regexp $predevice.* $inter_name ] } {
 												ixNet setA $router -enabled true
+												set findflag 1
 												#ixNet commit 
 											}
 										} elseif { $inter_name == $devicename } {
 											ixNet setA $router -enabled true
+											set findflag 1
 											#ixNet commit    
 											
 										}    
@@ -2478,18 +2485,104 @@ namespace eval IxiaFH {
 							}
 							ixNet commit
 							after 1000
-									
-							set prostate [ ixNet getA $prothandle -runningState ]
-							if { $prostate == "stopped" } {
-							Logto -info "router start $prothandle"
-							    catch {
-								   ixNet exec start $prothandle
-								   after 5000
-							    }
-							}
+							
+                            if { $findflag } {							
+								set prostate [ ixNet getA $prothandle -runningState ]
+								if { $prostate == "stopped" } {
+								Logto -info "router start $prothandle"
+									catch {
+									   ixNet exec start $prothandle
+									   after 5000
+									}
+								}
+							} 
 							   
 						}
-					}            
+					}  
+                    
+					if {$findflag == 0 } {
+					
+					    foreach fhport $fhportlist {
+							
+							set phandle [$fhport cget -handle]
+							set prothandle [ixNet getL $phandle/protocols $protocoltype]
+							if { $prothandle == "" } {
+								continue
+							}
+							Logto -info "protocol handle $prothandle"
+						
+
+							switch -exact -- $protocoltype {
+								isis {										
+									set routerlist [ ixNet getL $prothandle router ]																				
+								}
+								bgp {
+									
+									set routerlist [ ixNet getL $prothandle neighborRange ]
+											
+								}
+								ospf {									
+									set routerlist [ ixNet getL $prothandle router ]
+									
+								}
+							}
+							if { $routerlist == "" } {
+								continue
+							}
+							foreach router $routerlist {
+							#Logto -info "router handle $router"
+							    switch -exact -- $protocoltype {
+									isis {										
+										set rinterface [ ixNet getL $router interface ]
+										set inter_handle [ixNet getA $rinterface -interfaceId ]																						
+									}
+									bgp {
+										
+										set inter_handle [ixNet getA $router -interfaces ]
+												
+									}
+									ospf {									
+										set rinterface [ ixNet getL $router interface ]
+										set inter_handle [ixNet getA $rinterface -interfaces ]
+										
+									}
+								}
+								
+								if { $inter_handle == "" || $inter_handle == "::ixNet::OBJ-null"} {
+									continue
+								}
+								set inter_name [ ixNet getA $inter_handle -description ] 
+								if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
+									if { [regexp $predevice.* $inter_name ] } {
+										Logto -info "router handle $router"
+										ixNet setA $router -enabled true
+										set findflag 1
+										#ixNet commit 
+									}
+								} elseif { $inter_name == $devicename } {
+									Logto -info "router handle $router"
+									ixNet setA $router -enabled true
+									set findflag 1
+									#ixNet commit    
+									
+								}    
+							} 
+                            ixNet commit
+							after 1000
+							
+                            if { $findflag } {							
+								set prostate [ ixNet getA $prothandle -runningState ]
+								if { $prostate == "stopped" } {
+								Logto -info "router start $prothandle"
+									catch {
+									   ixNet exec start $prothandle
+									   after 5000
+									}
+								}
+							} 							
+						}
+						
+					}
 				}    	
 			} else {
 				set protocollist {isis ospf bgp}
@@ -2609,6 +2702,7 @@ namespace eval IxiaFH {
 		if { $loadflag } {
 			if {[info exists device_list] } {
 				foreach devicename $device_list {
+				    set findflag 0
 					set devicelist   [ split $devicename  _ ]
 					set portname     [ lindex $devicelist 0 ]
 					set protocoltype [ lindex $devicelist 1 ]
@@ -2658,11 +2752,13 @@ namespace eval IxiaFH {
 										if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
 											if { [regexp $predevice.* $inter_name ] } {
 												ixNet setA $router -enabled false
+												set findflag 1
 												#ixNet commit 
 												
 											}
 										} elseif { $inter_name == $devicename } {
 											ixNet setA $router -enabled false
+											set findflag 1
 											#ixNet commit 
 											Logto -info "router handle $router disabled"                                         
 											
@@ -2689,11 +2785,13 @@ namespace eval IxiaFH {
 										if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
 											if { [regexp $predevice.* $inter_name ] } {
 												ixNet setA $router -enabled false
+												set findflag 1
 												#ixNet commit 
 												
 											}
 										} elseif { $inter_name == $devicename } {
 											ixNet setA $router -enabled false
+											set findflag 1
 										   # ixNet commit 
 											Logto -info "router handle $router disabled"                                         
 											
@@ -2719,11 +2817,13 @@ namespace eval IxiaFH {
 										if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
 											if { [regexp $predevice.* $inter_name ] } {
 												ixNet setA $router -enabled false
+												set findflag 1
 												#ixNet commit 
 												
 											}
 										} elseif { $inter_name == $devicename } {
 											ixNet setA $router -enabled false
+											set findflag 1
 										   # ixNet commit 
 											Logto -info "router handle $router disabled"                                         
 											
@@ -2740,14 +2840,97 @@ namespace eval IxiaFH {
 									
 							ixNet commit 
 							after 1000
-							if { $stopflag == 1 } {
+							if { $stopflag == 1 && $findflag == 1 } {
 							Logto -info "router stop $prothandle"
 							   ixNet exec stop $prothandle
 							   after 5000
 							}
 							   
 						}
-					}            
+					}   
+                    
+                    if { $findflag == 0 } {
+					    foreach fhport $fhportlist {
+							
+							set phandle [$fhport cget -handle]
+							set prothandle [ixNet getL $phandle/protocols $protocoltype]
+							if { $prothandle == "" } {
+								continue
+							}
+							Logto -info "protocol handle $prothandle"
+						
+							switch -exact -- $protocoltype {
+								isis {										
+									set routerlist [ ixNet getL $prothandle router ]																				
+								}
+								bgp {
+									
+									set routerlist [ ixNet getL $prothandle neighborRange ]
+											
+								}
+								ospf {									
+									set routerlist [ ixNet getL $prothandle router ]
+									
+								}
+							}
+							if { $routerlist == "" } {
+								continue
+							}
+							foreach router $routerlist {
+							#Logto -info "router handle $router"
+							    switch -exact -- $protocoltype {
+									isis {										
+										set rinterface [ ixNet getL $router interface ]
+										set inter_handle [ixNet getA $rinterface -interfaceId ]																						
+									}
+									bgp {
+										
+										set inter_handle [ixNet getA $router -interfaces ]
+												
+									}
+									ospf {									
+										set rinterface [ ixNet getL $router interface ]
+										set inter_handle [ixNet getA $rinterface -interfaces ]
+										
+									}
+								}
+								
+								if { $inter_handle == "" || $inter_handle == "::ixNet::OBJ-null"} {
+									continue
+								}
+								set inter_name [ ixNet getA $inter_handle -description ] 
+								if {[  regexp {^([0-9a-zA-Z_]+)\*$} $devicename a predevice ]} {
+									if { [regexp $predevice.* $inter_name ] } {
+										Logto -info "router handle $router"
+										ixNet setA $router -enabled false
+										set findflag 1
+										#ixNet commit 
+									}
+								} elseif { $inter_name == $devicename } {
+									Logto -info "router handle $router"
+									ixNet setA $router -enabled false
+									set findflag 1
+									#ixNet commit    
+									
+								}    
+							} 
+                            ixNet commit
+							after 1000
+							
+							foreach router $routerlist {    
+								set routerstate [ixNet getA $router -enabled ]
+								if { $routerstate == "true" } {
+									set stopflag 0
+								}                                           
+							}
+							
+                            if { $stopflag == 1 && $findflag == 1 } {
+							Logto -info "router stop $prothandle"
+							   ixNet exec stop $prothandle
+							   after 5000
+							}							
+						}
+					}					
 				} 
 			} else {
 				set protocollist {isis ospf bgp}
