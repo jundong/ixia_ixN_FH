@@ -153,6 +153,7 @@ namespace eval IxiaFH {
 		} else {
 		   error "$errNumber(2) key:configfile "
 		}
+		return 1
 		
 	}
 
@@ -261,6 +262,7 @@ namespace eval IxiaFH {
 			error "$errNumber(2) :-ports"
 			
 		}
+		return 1
 		# set root [ixNet getRoot]
 		# ixNet exec apply $root/traffic
 		# after 1000
@@ -340,6 +342,7 @@ namespace eval IxiaFH {
 		    lappend portnamelist $name
 	        set arg [lindex $args [expr $i+1]]
 	    }
+		return 1
 		# set root [ixNet getRoot]
 		# ixNet exec apply $root/traffic
 		# after 1000
@@ -445,6 +448,79 @@ namespace eval IxiaFH {
 			
 		}
 		after 2000
+		# set root [ixNet getRoot]
+		# ixNet exec apply $root/traffic
+		# after 1000
+	     return 1
+	}
+	
+	proc port_modify { args } {
+		set tag "port_modify "
+		Logto -info "----- TAG: $tag -----"
+        Logto -info "args: $args"
+		global fhportlist
+        global errNumber
+		set len [llength $args]
+		puts $len
+		set arg [lindex $args 0]
+		set flag [llength $arg]
+		puts $flag
+		if {$flag == 1} {
+		    set len 1
+		    set arg $args
+		}
+		puts $arg
+		for {set i 0} {$i < $len} {incr i} {
+		  
+            Logto -info "arg: $arg"
+		    foreach { key value } $arg {
+			    set key [string tolower $key]
+			    switch -exact -- $key {
+				    -name {
+					    set portname [::IxiaFH::nstype $value]
+				    }
+					-port_media {
+					                        
+						$portname config -media $value -fhflag 1
+						Logto -info "$portname config -media $value -fhflag 1"								
+							
+				    }
+					-port_speed {
+					    set value [ string toupper $value ]
+						switch $value {
+							10M - 
+							100M -
+							1G -
+							40G -
+							100G {
+								                      
+								$portname config -speed $value -auto_neg 0 -fhflag 1
+								Logto -info "$portname config -speed $value -fhflag 1"
+																							   
+							}
+							10G_LAN -
+							10G_WAN {
+								                       
+								$portname config -type $value -fhflag 1
+								Logto -info "$portname config -type $value -fhflag 1"
+								
+
+							} 
+							AUTO_NEG {
+								                       
+								$portname config -auto_neg 1 -fhflag 1
+								Logto -info "$portname config -auto_neg $value -fhflag 1"
+								
+							}
+						}
+					}
+			    }
+		    }
+			
+				
+		    after 2000
+		    set arg [lindex $args [expr $i+1]]
+		}
 		# set root [ixNet getRoot]
 		# ixNet exec apply $root/traffic
 		# after 1000
@@ -1215,6 +1291,7 @@ namespace eval IxiaFH {
 			}
 	        set arg [lindex $args [expr $i+1]]
 	    }
+		return 1
 		# set root [ixNet getRoot]
 		# ixNet exec apply $root/traffic
 		# after 1000
@@ -1477,6 +1554,7 @@ namespace eval IxiaFH {
 	        set arg [lindex $args [expr $i+1]]
 			puts "i:$i"
 	    }
+		return 1
 		# set root [ixNet getRoot]
 		# ixNet exec apply $root/traffic
 		# after 1000
@@ -1775,6 +1853,7 @@ namespace eval IxiaFH {
 			
 	        set arg [lindex $args [expr $j+1]]
 	}
+	return 1
 		# set root [ixNet getRoot]
 		# ixNet exec apply $root/traffic
 		# after 1000
@@ -2351,7 +2430,8 @@ namespace eval IxiaFH {
 			# ixNet exec apply $root/traffic
 			# after 1000
 			set arg [lindex $args [expr $i+1]]
-	    }	
+	    }
+        return 1		
 
     }
 	proc device_start { args } {
@@ -2677,6 +2757,7 @@ namespace eval IxiaFH {
 			}
 		}
 		Logto -info "succeed to start router"
+		return 1
 		# set root [ixNet getRoot]
 		# ixNet exec apply $root/traffic
 		# after 1000
@@ -3028,6 +3109,7 @@ namespace eval IxiaFH {
 			# }
 		}
         Logto -info "succeed to stop router"
+		return 1
 		
 	}
 	proc capture_start {args } {
@@ -3610,7 +3692,7 @@ namespace eval IxiaFH {
 				}                
 			}
 		}		   
-			
+		return 1
 	}
 	
 	proc dhcp_client_bind { args } {
@@ -3666,6 +3748,7 @@ namespace eval IxiaFH {
             }                        
             ixNet exec dhcpClientStart $dhcpclientlist
         }
+		return 1
 	}
     
     proc dhcp_client_release { args } {
@@ -3722,6 +3805,7 @@ namespace eval IxiaFH {
             }                        
             ixNet exec dhcpClientStop $dhcpclientlist
         }
+		return 1
 	}
     
     proc dhcp_stats_get { args } {
@@ -3875,6 +3959,7 @@ namespace eval IxiaFH {
             }                        
             ixNet exec dhcpServerStart $dhcpsetverlist
         }
+		return 1
 	}
     
     proc dhcp_server_stop { args } {
@@ -3932,6 +4017,7 @@ namespace eval IxiaFH {
             }                        
             ixNet exec dhcpServerStop $dhcpsetverlist
         }
+		return 1
 	}
     
     proc pppoe_connect { args } {
@@ -3999,6 +4085,7 @@ namespace eval IxiaFH {
             puts $pppoeclientlist
             ixNet exec pppoxStart $pppoeclientlist 
         }
+		return 1
 	}
     
     proc pppoe_disconnect { args } {
@@ -4064,6 +4151,7 @@ namespace eval IxiaFH {
             }
             ixNet exec  pppoxStop $pppoeclientlist
         }
+		return 1
 	}
     
     proc pppoe_stats_get { args } {
@@ -4235,6 +4323,7 @@ namespace eval IxiaFH {
             puts $pppoeserverlist
             ixNet exec  pppoxStart $pppoeserverlist 
         }
+		return 1
 	}
     
     proc pppoe_server_stop { args } {
@@ -4300,6 +4389,7 @@ namespace eval IxiaFH {
             }
             ixNet exec  pppoxStop $pppoeserverlist
         }
+		return 1
 	}
     
     
@@ -4334,6 +4424,7 @@ namespace eval IxiaFH {
                 ixNet exec start $prohandle
             } else {
                 Logto -err "No port $port, device $device exists"
+				return 0
             }
         } else {
             set igmp_list ""
@@ -4346,6 +4437,7 @@ namespace eval IxiaFH {
             }                
             ixNet exec start $igmp_list
         }
+		return 1
     }
     
     proc igmp_querier_stop { args } {
@@ -4379,6 +4471,7 @@ namespace eval IxiaFH {
                 ixNet exec stop $prohandle
             } else {
                 Logto -err "No port $port, device $device exists"
+				return 0
             }
         } else {
             set igmp_list ""
@@ -4391,6 +4484,7 @@ namespace eval IxiaFH {
             }                
             ixNet exec stop $igmp_list
         }
+		return 1
     }
     
     proc igmp_join { args } {
@@ -4425,6 +4519,7 @@ namespace eval IxiaFH {
                 ixNet exec join $prohandle
             } else {
                 Logto -err "No port $port, device $device exists"
+				return 0
             }
         } else {
             set igmp_list ""
@@ -4437,6 +4532,7 @@ namespace eval IxiaFH {
             }                
             ixNet exec join $igmp_list
         }
+		return 1
     }
     
     proc igmp_leave { args } {
@@ -4471,6 +4567,7 @@ namespace eval IxiaFH {
                 ixNet exec leave $prohandle
             } else {
                 Logto -err "No port $port, device $device exists"
+				return 0
             }
         } else {
             set igmp_list ""
@@ -4483,6 +4580,7 @@ namespace eval IxiaFH {
             }                
             ixNet exec leave $igmp_list
         }
+		return 1
     }
     
     proc igmp_rejoin { args } {
@@ -4517,6 +4615,7 @@ namespace eval IxiaFH {
                 ixNet exec join $prohandle
             } else {
                 Logto -err "No port $port, device $device exists"
+				return 0
             }
         } else {
             set igmp_list ""
@@ -4529,6 +4628,7 @@ namespace eval IxiaFH {
             }                
             ixNet exec join $igmp_list
         }
+		return 1
         
     }
     
@@ -4564,6 +4664,7 @@ namespace eval IxiaFH {
                 ixNet exec start $prohandle
             } else {
                 Logto -err "No port $port, device $device exists"
+				return 0
             }
         } else {
             set igmp_list ""
@@ -4576,6 +4677,7 @@ namespace eval IxiaFH {
             }                
             ixNet exec start $igmp_list
         }
+		return 1
     }
     
     proc igmp_pim_stop { args } {
@@ -4610,6 +4712,7 @@ namespace eval IxiaFH {
                 ixNet exec stop $prohandle
             } else {
                 Logto -err "No port $port, device $device exists"
+				return 0
             }
         } else {
             set igmp_list ""
@@ -4622,6 +4725,7 @@ namespace eval IxiaFH {
             }                
             ixNet exec stop $igmp_list
         }
+		return 1
     }
     
 	proc ospfv2_create { args } {
@@ -4652,9 +4756,15 @@ namespace eval IxiaFH {
 			}
 		}
 		#set newdevice [::IxiaFH::nstype $device]
-       
-        protocol_handle  -device $device -protocoltype ospf
-        $device start	
+        if { [ catch {
+		   protocol_handle  -device $device -protocoltype ospf
+           $device start	
+		} ] } {
+		    return 0
+		} else {
+		    return 1
+		}
+        	
         
 	}
     
@@ -4681,9 +4791,16 @@ namespace eval IxiaFH {
 			}
 		}
 		
+		if { [ catch {
+		   protocol_handle  -device $device -protocoltype ospf
+           $device stop		
+		} ] } {
+		    return 0
+		} else {
+		    return 1
+		}
        
-        protocol_handle  -device $device -protocoltype ospf
-        $device stop	
+        	
         
 	}
     
@@ -4755,9 +4872,15 @@ namespace eval IxiaFH {
 			}
 		}
 		#set newdevice [::IxiaFH::nstype $device]
-       
-        protocol_handle  -device $device -protocoltype ospf
-        $device advertise_topo	
+        if { [ catch {
+		   protocol_handle  -device $device -protocoltype ospf
+           $device advertise_topo		
+		} ] } {
+		    return 0
+		} else {
+		    return 1
+		}
+        
         
 	}
     
@@ -4788,9 +4911,15 @@ namespace eval IxiaFH {
 			}
 		}
 		#set newdevice [::IxiaFH::nstype $device]
+        if { [ catch {
+		    protocol_handle  -device $device -protocoltype ospf
+            $device withdraw_topo	
+		} ] } {
+		    return 0
+		} else {
+		    return 1
+		}
        
-        protocol_handle  -device $device -protocoltype ospf
-        $device withdraw_topo	
         
 	}
     
@@ -4818,9 +4947,15 @@ namespace eval IxiaFH {
 			}
 		}
 		#set newdevice [::IxiaFH::nstype $device]
-       
-        protocol_handle  -device $device -protocoltype isis
-        $device start	
+        if { [ catch {
+		    protocol_handle  -device $device -protocoltype isis
+            $device start	
+		} ] } {
+		    return 0
+		} else {
+		    return 1
+		}
+        	
         
 	}
     
@@ -4849,8 +4984,15 @@ namespace eval IxiaFH {
 		}
 		#set newdevice [::IxiaFH::nstype $device]
        
-        protocol_handle  -device $device -protocoltype isis
-        $device stop	
+       	
+		if { [ catch {
+		    protocol_handle  -device $device -protocoltype isis
+            $device stop	
+		} ] } {
+		    return 0
+		} else {
+		    return 1
+		}
         
 	}
     
@@ -4922,8 +5064,15 @@ namespace eval IxiaFH {
 		}
 		#set newdevice [::IxiaFH::nstype $device]
        
-        protocol_handle  -device $device -protocoltype bgp
-        $device advertise_topo	
+       
+		if { [ catch {
+		    protocol_handle  -device $device -protocoltype isis
+            $device advertise_topo	
+		} ] } {
+		    return 0
+		} else {
+		    return 1
+		}
         
 	}
     
@@ -4954,9 +5103,14 @@ namespace eval IxiaFH {
 			}
 		}
 		#set newdevice [::IxiaFH::nstype $device]
-       
-        protocol_handle  -device $device -protocoltype bgp
-        $device withdraw_topo	
+        if { [ catch {
+		    protocol_handle  -device $device -protocoltype isis
+            $device withdraw_topo
+		} ] } {
+		    return 0
+		} else {
+		    return 1
+		}
         
 	}
     
@@ -4985,8 +5139,15 @@ namespace eval IxiaFH {
 		}
 		#set newdevice [::IxiaFH::nstype $device]
        
-        protocol_handle  -device $device -protocoltype bgp
-        $device start	
+        	
+		if { [ catch {
+		    protocol_handle  -device $device -protocoltype bgp
+            $device start
+		} ] } {
+		    return 0
+		} else {
+		    return 1
+		}
         
 	}
     
@@ -5014,9 +5175,16 @@ namespace eval IxiaFH {
 			}
 		}
 		#set newdevice [::IxiaFH::nstype $device]
-       
-        protocol_handle  -device $device -protocoltype bgp
-        $device stop	
+        
+      
+        if { [ catch {
+		    protocol_handle  -device $device -protocoltype bgp
+            $device stop 
+		} ] } {
+		    return 0
+		} else {
+		    return 1
+		}		
         
 	}
     
@@ -5088,8 +5256,15 @@ namespace eval IxiaFH {
 		}
 		#set newdevice [::IxiaFH::nstype $device]
        
-        protocol_handle  -device $device -protocoltype bgp
-        $device advertise_topo	
+        
+        if { [ catch {
+		    protocol_handle  -device $device -protocoltype bgp
+            $device advertise_topo 
+		} ] } {
+		    return 0
+		} else {
+		    return 1
+		}		
         
 	}
     
@@ -5120,9 +5295,15 @@ namespace eval IxiaFH {
 			}
 		}
 		#set newdevice [::IxiaFH::nstype $device]
-       
-        protocol_handle  -device $device -protocoltype bgp
-        $device withdraw_topo	
+        if { [ catch {
+		    protocol_handle  -device $device -protocoltype bgp
+            $device withdraw_topo 
+		} ] } {
+		    return 0
+		} else {
+		    return 1
+		}
+        
         
 	}
 	proc file_save { args } {
@@ -5142,12 +5323,19 @@ namespace eval IxiaFH {
 				}
 			}
 		}
-		if { [ file exist $file_path ] } {
+		if { [ catch {
+		    if { [ file exist $file_path ] } {
+			} else {
+				file mkdir $file_path
+			}
+			set logfile "$file_path/$name.ixncfg"
+			ixNet exec saveConfig [ixNet writeTo $logfile - ixNetRelative -overwrite] 
+		} ] } {
+		    return 0
 		} else {
-			file mkdir $file_path
+		    return 1
 		}
-		set logfile "$file_path/$name.ixncfg"
-		ixNet exec saveConfig [ixNet writeTo $logfile - ixNetRelative -overwrite] 
+		 
 	}
 }
 
