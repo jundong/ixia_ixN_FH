@@ -41,10 +41,7 @@ namespace eval IxiaFH {
 } ;
 
 namespace eval IxiaFH {
-
 	proc Logto { args } {
-	  
-	  
 	    global FHlogname
 		global fh_testname
 		global ::LOG_PATH
@@ -476,15 +473,16 @@ namespace eval IxiaFH {
 		    foreach { key value } $arg {
 			    set key [string tolower $key]
 			    switch -exact -- $key {
+					-port -
 				    -name {
 					    set portname [::IxiaFH::nstype $value]
 				    }
-					-port_media {
-					                        
+					-media -
+					-port_media {		                        
 						$portname config -media $value -fhflag 1
 						Logto -info "$portname config -media $value -fhflag 1"								
-							
 				    }
+					-speed -
 					-port_speed {
 					    set value [ string toupper $value ]
 						switch $value {
@@ -492,31 +490,23 @@ namespace eval IxiaFH {
 							100M -
 							1G -
 							40G -
-							100G {
-								                      
+							100G {                      
 								$portname config -speed $value -auto_neg 0 -fhflag 1
-								Logto -info "$portname config -speed $value -fhflag 1"
-																							   
+								Logto -info "$portname config -speed $value -fhflag 1"															   
 							}
 							10G_LAN -
-							10G_WAN {
-								                       
+							10G_WAN {	                       
 								$portname config -type $value -fhflag 1
 								Logto -info "$portname config -type $value -fhflag 1"
-								
-
 							} 
-							AUTO_NEG {
-								                       
+							AUTO_NEG {			                       
 								$portname config -auto_neg 1 -fhflag 1
-								Logto -info "$portname config -auto_neg $value -fhflag 1"
-								
+								Logto -info "$portname config -auto_neg $value -fhflag 1"				
 							}
 						}
 					}
 			    }
 		    }
-			
 				
 		    after 2000
 		    set arg [lindex $args [expr $i+1]]
@@ -876,12 +866,11 @@ namespace eval IxiaFH {
 				}
 				return 1
 			}
-					
-			
 		} else {
 			Tester::stop_traffic
 		}
         Logto -info "succeed to stop traffic"
+        return 1
 	}
 
 	proc results_get { args } {
@@ -1164,7 +1153,7 @@ namespace eval IxiaFH {
             Logto -info "succeed to set the traffic rate"
 			return 1
 		}
-		
+		return 1
 	}
 	proc traffic_create {args} {
 		set tag "traffic_create "
@@ -3333,14 +3322,15 @@ namespace eval IxiaFH {
 				
 			}
 		}
-	Logto -info "hex:$hex"
+        Logto -info "hex:$hex"
 		if {$hex == $ref } {
 			return 1 
 		} else {
-			return "capture hex: $hex; ref :$ref"
+			Logto -info "capture hex: $hex; ref :$ref"
+            return 0
 		}
 			
-		
+		return 1
 	}
 
     proc access_protocol_handle { args } {

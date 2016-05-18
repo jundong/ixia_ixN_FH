@@ -523,25 +523,25 @@ Deputs "Args:$args "
                 set value [ string tolower $value ]
                 if { [ lsearch -exact $EMedia $value ] >= 0 } {
                     set media $value
-Deputs "media:$media"                    
+					Deputs "media:$media"                    
                 } else {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
             -speed {
+				set value [ string toupper $value ]
                 switch $value {
                     10M {
                         set speed 10
                     }
                     100M {
-					
                         set speed 100
                     }
                     1G {
                         set speed 1000
                     }
                 }
-Deputs "speed:$speed"
+				Deputs "speed:$speed"
             }
             -auto_neg {
                 set trans [ BoolTrans $value ]

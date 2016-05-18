@@ -1,0 +1,67 @@
+[<IXIA>TIME:23:49:40]-info ----- TAG: port_create  -----
+[<IXIA>TIME:23:49:40]-info args: -name i1_d1_1 -port_location //10.210.100.12/5/1 -port_type EthernetFiber
+[<IXIA>TIME:23:49:40]-info online: hw_id:10.210.100.12/5/1; portname: i1_d1_1; port_type: fiber 
+[<IXIA>TIME:23:49:51]-info ----- TAG: port_create  -----
+[<IXIA>TIME:23:49:51]-info args: -name i1_d2_1 -port_location //10.210.100.12/5/2 -port_type EthernetFiber
+[<IXIA>TIME:23:49:51]-info online: hw_id:10.210.100.12/5/2; portname: i1_d2_1; port_type: fiber 
+[<IXIA>TIME:23:50:00]-info ----- TAG: port_modify  -----
+[<IXIA>TIME:23:50:00]-info args: -port i1_d1_1 -media fiber -speed 1g
+[<IXIA>TIME:23:50:00]-info arg: -port i1_d1_1 -media fiber -speed 1g
+[<IXIA>TIME:23:50:02]-info ::IxiaFH::i1_d1_1 config -media fiber -fhflag 1
+[<IXIA>TIME:23:50:05]-info ::IxiaFH::i1_d1_1 config -speed 1G -fhflag 1
+[<IXIA>TIME:23:50:07]-info ----- TAG: port_modify  -----
+[<IXIA>TIME:23:50:07]-info args: -port i1_d2_1 -media fiber -speed 1g
+[<IXIA>TIME:23:50:07]-info arg: -port i1_d2_1 -media fiber -speed 1g
+[<IXIA>TIME:23:50:09]-info ::IxiaFH::i1_d2_1 config -media fiber -fhflag 1
+[<IXIA>TIME:23:50:11]-info ::IxiaFH::i1_d2_1 config -speed 1G -fhflag 1
+[<IXIA>TIME:23:50:13]-info ----- TAG: device_create  -----
+[<IXIA>TIME:23:50:13]-info args: -name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:01 }
+[<IXIA>TIME:23:50:13]-info arg: -name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:01 }
+[<IXIA>TIME:23:50:13]-info Succeed to create device object: ::IxiaFH::i1p1_ka under Port object: ::IxiaFH::i1_d1_1
+[<IXIA>TIME:23:50:13]-info ----- TAG: device_config  -----
+[<IXIA>TIME:23:50:13]-info args: {-name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:01 }}
+[<IXIA>TIME:23:50:13]-info arg: -name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:01 }
+[<IXIA>TIME:23:50:15]-info succeed to config device ::IxiaFH::i1p1_ka
+[<IXIA>TIME:23:50:15]-info ----- TAG: device_create  -----
+[<IXIA>TIME:23:50:15]-info args: -name i1p2_demk -port i1_d2_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:02 }
+[<IXIA>TIME:23:50:15]-info arg: -name i1p2_demk -port i1_d2_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:02 }
+[<IXIA>TIME:23:50:15]-info Succeed to create device object: ::IxiaFH::i1p2_demk under Port object: ::IxiaFH::i1_d2_1
+[<IXIA>TIME:23:50:15]-info ----- TAG: device_config  -----
+[<IXIA>TIME:23:50:15]-info args: {-name i1p2_demk -port i1_d2_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:02 }}
+[<IXIA>TIME:23:50:15]-info arg: -name i1p2_demk -port i1_d2_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:02 }
+[<IXIA>TIME:23:50:16]-info succeed to config device ::IxiaFH::i1p2_demk
+[<IXIA>TIME:23:50:16]-info ----- TAG: traffic_create  -----
+[<IXIA>TIME:23:50:16]-info args: -name i1p1_s -port i1_d1_1 -srcbinding i1p1_ka -dstbinding i1p2_demk -framesize_fix 1000 -load_mode fixed -load_unit fps -load 1000
+[<IXIA>TIME:23:50:16]-info arg: -name i1p1_s -port i1_d1_1 -srcbinding i1p1_ka -dstbinding i1p2_demk -framesize_fix 1000 -load_mode fixed -load_unit fps -load 1000
+[<IXIA>TIME:23:50:17]-info Succeed to create traffic ::IxiaFH::i1p1_s
+[<IXIA>TIME:23:50:17]-info ----- TAG: traffic_config  -----
+[<IXIA>TIME:23:50:17]-info args: -name i1p1_s -port i1_d1_1 -srcbinding i1p1_ka -dstbinding i1p2_demk -framesize_fix 1000 -load_mode fixed -load_unit fps -load 1000
+[<IXIA>TIME:23:50:17]-info arg: -name i1p1_s -port i1_d1_1 -srcbinding i1p1_ka -dstbinding i1p2_demk -framesize_fix 1000 -load_mode fixed -load_unit fps -load 1000
+[<IXIA>TIME:23:50:38]-info Succeed to config traffic: i1p1_s
+[<IXIA>TIME:23:50:38]-info ----- TAG: traffic_create  -----
+[<IXIA>TIME:23:50:38]-info args: -name i1p2_bijv -port i1_d2_1 -srcbinding i1p2_demk -dstbinding i1p1_ka -framesize_fix 1000 -load_mode fixed -load_unit fps -load 1000
+[<IXIA>TIME:23:50:38]-info arg: -name i1p2_bijv -port i1_d2_1 -srcbinding i1p2_demk -dstbinding i1p1_ka -framesize_fix 1000 -load_mode fixed -load_unit fps -load 1000
+[<IXIA>TIME:23:50:38]-info Succeed to create traffic ::IxiaFH::i1p2_bijv
+[<IXIA>TIME:23:50:38]-info ----- TAG: traffic_config  -----
+[<IXIA>TIME:23:50:38]-info args: -name i1p2_bijv -port i1_d2_1 -srcbinding i1p2_demk -dstbinding i1p1_ka -framesize_fix 1000 -load_mode fixed -load_unit fps -load 1000
+[<IXIA>TIME:23:50:38]-info arg: -name i1p2_bijv -port i1_d2_1 -srcbinding i1p2_demk -dstbinding i1p1_ka -framesize_fix 1000 -load_mode fixed -load_unit fps -load 1000
+[<IXIA>TIME:23:51:00]-info Succeed to config traffic: i1p2_bijv
+[<IXIA>TIME:23:56:23]-info ----- TAG: traffic_start  -----
+[<IXIA>TIME:23:56:23]-info args: 
+[<IXIA>TIME:23:56:37]-info ----- TAG: traffic_stop  -----
+[<IXIA>TIME:23:56:37]-info args: 
+[<IXIA>TIME:23:56:43]-info succeed to stop traffic
+[<IXIA>TIME:23:56:43]-info ----- TAG: results_get  -----
+[<IXIA>TIME:23:56:43]-info args: -counter S:*.*
+[<IXIA>TIME:23:56:48]-info Streamname TxFrameCount RxFrameCount TxFrameRate RxFrameRate TxL1BitRate RxL1BitRate TxL2BitRate RxL2BitRate minLatency maxLatency avgLatenvy  minJitter  maxJitter  avgJitter DroppedCount 
+[<IXIA>TIME:23:56:48]-info ::IxiaFH::i1p1_s_EndpointSet_1___Flow_Group_0001       1973       1973          0          0          0          0          0          0          0          0          0         NA         NA         NA          0 
+[<IXIA>TIME:23:56:48]-info ::IxiaFH::i1p2_bijv_EndpointSet_1___Flow_Group_0001       1973       1973          0          0          0          0          0          0          0          0          0         NA         NA         NA          0 
+[<IXIA>TIME:23:56:48]-info ::IxiaFH::i1p1_s       1973       1973          0          0          0          0          0          0          0          0          0         NA         NA         NA          0 
+[<IXIA>TIME:23:56:48]-info ::IxiaFH::i1p2_bijv       1973       1973          0          0          0          0          0          0          0          0          0         NA         NA         NA          0 
+[<IXIA>TIME:23:56:48]-info ----- TAG: results_get  -----
+[<IXIA>TIME:23:56:48]-info args: -counter S:*.*
+[<IXIA>TIME:23:56:50]-info Streamname TxFrameCount RxFrameCount TxFrameRate RxFrameRate TxL1BitRate RxL1BitRate TxL2BitRate RxL2BitRate minLatency maxLatency avgLatenvy  minJitter  maxJitter  avgJitter DroppedCount 
+[<IXIA>TIME:23:56:50]-info ::IxiaFH::i1p1_s_EndpointSet_1___Flow_Group_0001       1973       1973          0          0          0          0          0          0          0          0          0         NA         NA         NA          0 
+[<IXIA>TIME:23:56:50]-info ::IxiaFH::i1p2_bijv_EndpointSet_1___Flow_Group_0001       1973       1973          0          0          0          0          0          0          0          0          0         NA         NA         NA          0 
+[<IXIA>TIME:23:56:50]-info ::IxiaFH::i1p1_s       1973       1973          0          0          0          0          0          0          0          0          0         NA         NA         NA          0 
+[<IXIA>TIME:23:56:50]-info ::IxiaFH::i1p2_bijv       1973       1973          0          0          0          0          0          0          0          0          0         NA         NA         NA          0 

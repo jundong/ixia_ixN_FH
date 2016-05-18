@@ -463,8 +463,7 @@ Deputs "port:$port"
 body Traffic::config { args  } {
 # in case the handle was removed
 	if { $handle == "" } {
-	   
-Deputs "reborn traffic...."
+        Deputs "reborn traffic...."
 		set root    [ixNet getRoot]
 		set handle  [ixNet add $root/traffic trafficItem]
 	
@@ -472,25 +471,22 @@ Deputs "reborn traffic...."
 		set handle [ ixNet remapIds $handle ]
 		ixNet setA $handle -name $this
 		set port $portObj
-Deputs "port:$port"
+        Deputs "port:$port"
 		if { [ catch {
 			set hPort [ $port cget -handle ]
 		} ] } {
 			set port [ GetObject $port ]
 			set hPort [ $port cget -handle ]
 		}
-		    set highLevelStream ""
-Deputs "hport:$hPort" 
+		set highLevelStream ""
+        Deputs "hport:$hPort" 
         set hTraffic $handle
-       
 	}
 
-
-# enable l1Rate use 4 bytes signature and disable data integrity check
+    # enable l1Rate use 4 bytes signature and disable data integrity check
 	set root [ixNet getRoot]
 
-
-# get default port Mac and IP address
+    # get default port Mac and IP address
 	set default_mac [ lindex [ $portObj cget -intf_mac ] 0 ]
 	set default_ip  [ lindex [ $portObj cget -intf_ipv4 ] 0 ]
 	if { ( $default_ip == "0.0.0.0" ) || ( $default_ip == "" ) } {
@@ -498,22 +494,22 @@ Deputs "hport:$hPort"
 	}
 	if { $default_mac == "" } {
 		set default_int [ lindex [ ixNet getL [ $portObj cget -handle ] interface ] 0 ]
-Deputs "default interface:$default_int"
+        Deputs "default interface:$default_int"
 		if { $default_int != "" } {
 			set default_mac [ ixNet getA $default_int/ethernet -macAddress ]
 		}
 		if { $default_mac == "::ixNet::OK" } {
-Deputs "get mac error"		
+            Deputs "get mac error"		
 			set default_mac "00:00:00:00:00:01"
 		}
 	}
-Deputs "default mac:$default_mac"
-Deputs "default ip:$default_ip"
-
+    Deputs "default mac:$default_mac"
+    Deputs "default ip:$default_ip"
 
     global errorInfo
     global errNumber
     
+    set RMode       [ list fixed increment decrement ]
     set EMode       [ list continuous burst iteration ]
     set ELenType    [ list fixed incr random auto ]
     set EFillType   [ list constant incr decr prbs random ]
@@ -532,9 +528,9 @@ Deputs "default ip:$default_ip"
 	set regenerateflag 1
 	
     set tag "body Traffic::config [info script]"
-Deputs "----- TAG: $tag -----"
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {
@@ -548,13 +544,12 @@ Deputs "Args:$args "
 			 set dst $value
 		  }
 		  -pdu {
-			 set pdu $value
-Deputs "pdu:$pdu"
+			set pdu $value
+            Deputs "pdu:$pdu"
 		  }
 		  -tx_mode {
 			 set value [ string tolower $value ]
-			 if { [ lsearch -exact $EMode $value ] >= 0 } {
-				
+			 if { [ lsearch -exact $RMode $value ] >= 0 } {
 				set tx_mode $value
 			 } else {
 				error "$errNumber(1) key:$key value:$value"
@@ -652,9 +647,8 @@ Deputs "pdu:$pdu"
 			 }				
 		  }
 		  -load_unit {
-			  set value [ string toupper $value ]
+			set value [ string toupper $value ]
 			 if { [ lsearch -exact $ELoadUnit $value ] >= 0 } {
-				
 				set load_unit $value
 			 } else {
 				error "$errNumber(1) key:$key value:$value"
@@ -1418,34 +1412,37 @@ Deputs "fullMesh:[ixNet getA $obj -fullMesh ]"
 		   
 		}
    } else {
-Deputs Step120	
+        Deputs Step120	
 		if { [ info exists src ] == 0 } {
 			set src $portObj
 		}
-Deputs "src:$src"
+        Deputs "src:$src"
 	}
-Deputs Step150    
+    Deputs Step150    
     ixNet commit
 	ixNet commit
 	#after 2000
 	
     if { [ info exists tx_mode ] } {
-	Deputs tx_mode
-	   if { $tx_mode == "burst" } {
-			set tx_mode fixedFrameCount
-	   }
-	   if { $tx_mode == "iteration" } {
-			set tx_mode fixedIterationCount
-	   }
-	   
-	   foreach configElement $highLevelStream {
-		   ixNet setA $configElement/transmissionControl -type $tx_mode
-	   }
+        Deputs tx_mode
+        if { $tx_mode == "fixed" } {
+			set tx_mode framesPerSecond
+        } elseif { $tx_mode == "increment" } {
+			set tx_mode ""
+        } elseif { $tx_mode == "decrement" } {
+			set tx_mode ""
+        }
+        
+        foreach configElement $highLevelStream {
+            if { $tx_mode != "" } {
+                ixNet setA $configElement/frameRate -type $tx_mode
+            }
+        }
 		ixNet commit
     }
     
     if { [ info exists tx_num ] } {
-	Deputs tx_num
+        Deputs tx_num
 		foreach configElement $highLevelStream {
 			ixNet setA $configElement/transmissionControl -frameCount $tx_num
 		}
@@ -1453,7 +1450,7 @@ Deputs Step150
     }
     
     if { [ info exists frame_len_type ] } {
-	Deputs frame_len_type
+        Deputs frame_len_type
 	   if { $frame_len_type == "incr" } {
 		  set frame_len_type increment
 	   }

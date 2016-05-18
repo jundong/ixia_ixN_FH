@@ -1,0 +1,39 @@
+[<IXIA>TIME:23:43:20]-info ----- TAG: port_create  -----
+[<IXIA>TIME:23:43:20]-info args: -name i1_d1_1 -port_location //10.210.100.12/5/1 -port_type EthernetFiber
+[<IXIA>TIME:23:43:20]-info online: hw_id:10.210.100.12/5/1; portname: i1_d1_1; port_type: fiber 
+[<IXIA>TIME:23:43:33]-info ----- TAG: port_create  -----
+[<IXIA>TIME:23:43:33]-info args: -name i1_d2_1 -port_location //10.210.100.12/5/2 -port_type EthernetFiber
+[<IXIA>TIME:23:43:33]-info online: hw_id:10.210.100.12/5/2; portname: i1_d2_1; port_type: fiber 
+[<IXIA>TIME:23:43:41]-info ----- TAG: port_modify  -----
+[<IXIA>TIME:23:43:41]-info args: -port i1_d1_1 -media fiber -speed 1g
+[<IXIA>TIME:23:43:41]-info arg: -port i1_d1_1 -media fiber -speed 1g
+[<IXIA>TIME:23:43:43]-info ::IxiaFH::i1_d1_1 config -media fiber -fhflag 1
+[<IXIA>TIME:23:43:46]-info ::IxiaFH::i1_d1_1 config -speed 1G -fhflag 1
+[<IXIA>TIME:23:43:48]-info ----- TAG: port_modify  -----
+[<IXIA>TIME:23:43:48]-info args: -port i1_d2_1 -media fiber -speed 1g
+[<IXIA>TIME:23:43:48]-info arg: -port i1_d2_1 -media fiber -speed 1g
+[<IXIA>TIME:23:43:50]-info ::IxiaFH::i1_d2_1 config -media fiber -fhflag 1
+[<IXIA>TIME:23:43:53]-info ::IxiaFH::i1_d2_1 config -speed 1G -fhflag 1
+[<IXIA>TIME:23:43:55]-info ----- TAG: device_create  -----
+[<IXIA>TIME:23:43:55]-info args: -name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:01 }
+[<IXIA>TIME:23:43:55]-info arg: -name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:01 }
+[<IXIA>TIME:23:43:55]-info Succeed to create device object: ::IxiaFH::i1p1_ka under Port object: ::IxiaFH::i1_d1_1
+[<IXIA>TIME:23:43:55]-info ----- TAG: device_config  -----
+[<IXIA>TIME:23:43:55]-info args: {-name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:01 }}
+[<IXIA>TIME:23:43:55]-info arg: -name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:01 }
+[<IXIA>TIME:23:43:57]-info succeed to config device ::IxiaFH::i1p1_ka
+[<IXIA>TIME:23:43:57]-info ----- TAG: device_create  -----
+[<IXIA>TIME:23:43:57]-info args: -name i1p2_demk -port i1_d2_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:02 }
+[<IXIA>TIME:23:43:57]-info arg: -name i1p2_demk -port i1_d2_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:02 }
+[<IXIA>TIME:23:43:57]-info Succeed to create device object: ::IxiaFH::i1p2_demk under Port object: ::IxiaFH::i1_d2_1
+[<IXIA>TIME:23:43:57]-info ----- TAG: device_config  -----
+[<IXIA>TIME:23:43:57]-info args: {-name i1p2_demk -port i1_d2_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:02 }}
+[<IXIA>TIME:23:43:57]-info arg: -name i1p2_demk -port i1_d2_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:02 }
+[<IXIA>TIME:23:43:58]-info succeed to config device ::IxiaFH::i1p2_demk
+[<IXIA>TIME:23:43:58]-info ----- TAG: traffic_create  -----
+[<IXIA>TIME:23:43:58]-info args: -name i1p1_s -port i1_d1_1 -srcbinding i1p1_ka -dstbinding i1p2_demk -framesize_fix 1000 -load_mode fixed -load_unit fps -load 1000
+[<IXIA>TIME:23:43:58]-info arg: -name i1p1_s -port i1_d1_1 -srcbinding i1p1_ka -dstbinding i1p2_demk -framesize_fix 1000 -load_mode fixed -load_unit fps -load 1000
+[<IXIA>TIME:23:43:59]-info Succeed to create traffic ::IxiaFH::i1p1_s
+[<IXIA>TIME:23:43:59]-info ----- TAG: traffic_config  -----
+[<IXIA>TIME:23:43:59]-info args: -name i1p1_s -port i1_d1_1 -srcbinding i1p1_ka -dstbinding i1p2_demk -framesize_fix 1000 -load_mode fixed -load_unit fps -load 1000
+[<IXIA>TIME:23:43:59]-info arg: -name i1p1_s -port i1_d1_1 -srcbinding i1p1_ka -dstbinding i1p2_demk -framesize_fix 1000 -load_mode fixed -load_unit fps -load 1000
