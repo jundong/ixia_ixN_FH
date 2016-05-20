@@ -882,6 +882,7 @@ namespace eval IxiaFH {
         global errNumber
 		
         set type "all"
+        set result {}
 		foreach { key value } $args {
 			set key [string tolower $key]
 			switch -exact -- $key {
@@ -928,7 +929,7 @@ namespace eval IxiaFH {
 			set info [eval format $vlist]	
 			Logto -info $info	
 			
-			return $result
+			#return $result
 		}
 		if {$counter == "P:*.*"} {
 			set result {}
@@ -991,7 +992,7 @@ namespace eval IxiaFH {
 			Logto -info $info
 			set info [eval format $vlist]	
 			Logto -info $info	
-			return $result
+			#return $result
 		}
 		if {$counter == "S:*.*"} {
 			set result {}
@@ -1033,8 +1034,13 @@ namespace eval IxiaFH {
 				Logto -info $info	
 				set result "${result} ${tempres}"
 			}
-			return $result
+			#return $result
 		}
+        Deputs "result:$result"
+        #remove ::IxiaFH:: namespace
+        set result [string map {"::IxiaFH::" ""} $result]
+        Deputs "result without namespace:$result"
+        return $result
 	}
 
 
