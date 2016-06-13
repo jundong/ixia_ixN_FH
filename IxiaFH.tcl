@@ -1026,12 +1026,16 @@ namespace eval IxiaFH {
 					
 				set vlist "{$fmtlist} $streamobj "
 				foreach { key value } $tempres {
-					set vlist $vlist$value$sp				
+                    if { $value == "" } {
+                        set vlist ${vlist}NA$sp
+                    } else {
+                        set vlist $vlist$value$sp
+                    }
 				}
-				
-
-				set info [eval format $vlist]	
-				Logto -info $info	
+                catch {
+                    set info [eval format $vlist]	
+                    Logto -info $info
+                }
 				set result "${result} ${tempres}"
 			}
 			#return $result
