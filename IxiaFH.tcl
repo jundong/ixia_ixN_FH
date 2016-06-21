@@ -138,9 +138,8 @@ namespace eval IxiaFH {
 				}
 			}
 		}
-		
 		Login
-		Logto -info "Succeed to login"
+        Logto -info "Succeed to login"
 		set deviceList ""
 		set hostlist ""
 		if { [ info exists configfile ] } {
@@ -148,7 +147,7 @@ namespace eval IxiaFH {
 			set loadflag 1
 			
 		} else {
-		   error "$errNumber(2) key:configfile "
+            error "$errNumber(2) key:configfile "
 		}
 		return 1
 		
@@ -159,10 +158,13 @@ namespace eval IxiaFH {
 		#Logto -info "----- TAG: $tag -----"
         set newlist {}
         foreach na $namelist {
-            lappend newlist "::IxiaFH::$na"
+            if { [string range $na 0 9] == "::IxiaFH::" } {
+                lappend newlist $na
+            } else {
+                lappend newlist "::IxiaFH::$na"
+            }
         }
 		return $newlist
-    
     }
 
 	proc port_reserve {args} {
@@ -213,17 +215,14 @@ namespace eval IxiaFH {
 		}
 		
 		set index 0
-		after 15000  
+		after [expr 60 * 1000]  
 		if {[ info exists hw_list ]} {
-			if {$offline == 0 } {
-				 
-				foreach hw_id_org $hw_list {
-
-				  
+			if {$offline == 0 } {			 
+				foreach hw_id_org $hw_list {	  
 					if {[regexp {^//(.+)} $hw_id_org b hw_id] == 1} {				
-		Logto -info "hw_id:$hw_id"
+                        Logto -info "hw_id:$hw_id"
 						set port_handle [lindex $portlist $index]
-		Logto -info "port_handle: $port_handle"				
+                        Logto -info "port_handle: $port_handle"				
 						set portn [lindex $portnamelist $index]
                         if { $loadflag } {
 						    Port $portn $hw_id NULL $port_handle
@@ -238,9 +237,9 @@ namespace eval IxiaFH {
 				}
 			} else {
 				foreach portn $portnamelist {
-	Logto -info "portn:$portn"
+                    Logto -info "portn:$portn"
 					set port_handle [lindex $portlist $index]
-	Logto -info "port_handle: $port_handle"
+                    Logto -info "port_handle: $port_handle"
 				
 					Port $portn NULL NULL $port_handle $offline
 					incr index
@@ -322,18 +321,16 @@ namespace eval IxiaFH {
 			#set portn [::IxiaFH::nstype $name]
 		    
 		    if {[ info exists port_location ]} {	
-			
-			
 				if {[regexp {^//(.+)} $port_location b hw_id] == 1} {				
-				Logto -info "online: hw_id:$hw_id; portname: $portn; port_type: $port_type "			
+                    Logto -info "online: hw_id:$hw_id; portname: $portn; port_type: $port_type "			
 					Port $portn $hw_id $port_type 						   
 				} else {
 					error "$errNumber(2) :hw_id:$hw_id"
 				}				    
 			} else {
-			puts "aaaa"
-			Logto -info "offline :$portn"		
-					Port $portn NULL NULL NULL 1
+                puts "aaaa"
+                Logto -info "offline :$portn"		
+				Port $portn NULL NULL NULL 1
 			}
             lappend portlist  [$name cget -handle]
 		    lappend portnamelist $name
@@ -536,10 +533,14 @@ namespace eval IxiaFH {
 			set key [string tolower $key]
 			switch -exact -- $key {
 				-port {
-					set port_list $value
+                    foreach portobj $value {
+                        lappend port_list [::IxiaFH::nstype $portobj]
+                    }
 				}
 				-streamblock {
-					set streamblock $value
+                    foreach streamobj $value {
+                        lappend streamblock [::IxiaFH::nstype $streamobj]
+                    }
 				}
 				-arp {
 					set arp_enable $value
@@ -569,10 +570,8 @@ namespace eval IxiaFH {
         if { [info exists port_list ] } {
             foreach portobj $port_list {
                 if { [regexp {(.+)\*} $portobj a pname ]} {
-			
                     foreach fhport $fhportlist {
                         if {[regexp $pname $fhport]} {
-                        
                             set phandle [$fhport cget -handle]
                             foreach flow $flowlist {                                    
                                 set txPort [ ixNet getA $flow -txPortId ] 
@@ -589,7 +588,6 @@ namespace eval IxiaFH {
                     }
                 
                 } else { 	
-
                     set phandle [$portobj cget -handle]
                     foreach flow $flowlist {                                    
                         set txPort [ ixNet getA $flow -txPortId ] 
@@ -620,19 +618,15 @@ namespace eval IxiaFH {
 							puts $txItem
                             if { [ lsearch -exact $txItemList $txItem ] == -1 } {
                                 lappend txItemList $txItem
-					
                             }
-                            
                         }
                     }                   
-                
                 } else {
                     lappend txList [ $streamobj cget -handle ]  
                     set txItem [$streamobj cget -hTraffic]
 					puts $txItem
                     if { [ lsearch -exact $txItemList $txItem ] == -1 } {
                         lappend txItemList $txItem
-				
                     }                    
                 }
             }
@@ -668,24 +662,26 @@ namespace eval IxiaFH {
 				set rg_incrstep ""
 				set rg_incrto ""
 				
-				
 			    foreach flow $txList {
-				 
 				    lappend rg_namelist [ ixNet getA $flow -name ]
-					set frame_rate [ ixNet getL $flow frameRate ]
+                    if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
+                        set frame_rate [ ixNet getL $flow frameRate ]
+                    } else {
+                        set frame_rate [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameRate ]
+                    }
 					lappend rg_ratelist [ ixNet getA $frame_rate -rate ]
 					lappend rg_ratemode [ ixNet getA $frame_rate -type ]
-					set frame_size [ ixNet getL $flow frameSize ]
+                    if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
+                        set frame_size [ ixNet getL $flow frameSize ]
+                    } else {
+                        set frame_size [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameSize ]
+                    }
 					lappend rg_sizetype [ ixNet getA $frame_size -type ]
 					lappend rg_fixedsize [ ixNet getA $frame_size -fixedSize ]
 					lappend rg_incrfrom [ ixNet getA $frame_size -incrementFrom ]
 					lappend rg_incrstep [ ixNet getA $frame_size -incrementStep ]
 					lappend rg_incrto [ ixNet getA $frame_size -incrementTo ]
-					
-					
-				}
-				
-					
+				}		
 			}
             # foreach item $txItemList { 
             # puts $item			
@@ -707,31 +703,26 @@ namespace eval IxiaFH {
 			    foreach flow $txList rgname $rg_namelist rgrate $rg_ratelist rgmode $rg_ratemode \
 				rgsizetype $rg_sizetype rgfixed $rg_fixedsize rgincrfrom $rg_incrfrom \
 				rgincrstep $rg_incrstep rgincrto $rg_incrto {
-					# puts "flow: $flow"
-					# puts "rgname:$rgname"
-				# puts "rgrate:$rgrate" 
-				# puts "rgmode:$rgmode"
-				# puts "rgsizetype:$rgsizetype" 
-				# puts "rgfixed :$rgfixed "
-				# puts "rgincrfrom:$rgincrfrom" 
-				# puts "rgincrstep:$rgincrstep"
-				# puts "rgincrto:$rgincrto"
 				    ixNet setA $flow -name  $rgname
-					set frame_rate [ ixNet getL $flow frameRate ]
+                    if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
+                        set frame_rate [ ixNet getL $flow frameRate ]
+                    } else {
+                        set frame_rate [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameRate ]
+                    }
 					ixNet setM $frame_rate -type $rgmode  \
-					                       -rate $rgrate 
-					                       
-					set frame_size [ ixNet getL $flow frameSize ]
+					                       -rate $rgrate
+                    
+                    if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
+                        set frame_size [ ixNet getL $flow frameSize ]
+                    } else {
+                        set frame_size [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameSize ]
+                    }
 					ixNet setM $frame_size -type $rgsizetype  \
 					                       -fixedSize $rgfixed \
                                            -incrementFrom $rgincrfrom \
 										   -incrementStep  $rgincrstep \
 										   -incrementTo    $rgincrto
-					
-					
-					
 				}
-				
 				
 				ixNet commit
 				ixNet commit
@@ -785,24 +776,18 @@ namespace eval IxiaFH {
         }
         
         if { $restartCapture } {
-			catch { 				
-		
+			catch {
 				ixNet exec closeAllTabs
                 ixNet exec startCapture
                 after 3000
 			}
 		}
          
-        
-        
-		
 		if { [info exists port_list] || [info exists streamblock] } {
-			
             ixNet exec startStatelessTraffic $txList
             return 1								
 			
 		} else {
-			puts "1111111"
 			Tester::start_traffic 1 1
 			return 1
 		}
@@ -821,10 +806,14 @@ namespace eval IxiaFH {
 			set key [string tolower $key]
 			switch -exact -- $key {
 				-port {
-					set port_list $value                    
+                    foreach portobj $value {
+                        lappend port_list [::IxiaFH::nstype $portobj]
+                    }                  
 				}
 				-streamblock {
-					set streamblock $value
+                    foreach streamobj $value {
+                        lappend streamblock [::IxiaFH::nstype streamobj]
+                    }
 				}
 				default {
 					error "$errNumber(3) key:$key value:$value"
@@ -832,9 +821,7 @@ namespace eval IxiaFH {
 			}
 		}
 		
-		
 		if { [info exists port_list] || [info exists streamblock] } {
-			
 			if { [info exists port_list ] } {
 				foreach portobj $port_list {
 					if { [regexp {(.+)\*} $portobj a pname ]} {
@@ -888,7 +875,6 @@ namespace eval IxiaFH {
 			switch -exact -- $key {
 				-counter {
 					set counter $value
-				   
 				}
 				-filter {
 					set filter $value
@@ -1002,7 +988,7 @@ namespace eval IxiaFH {
 			foreach tempres $tempreslist {
 				Deputs "tempres:$tempres"
 				set len [llength $tempres]
-				if { $flag == 0 } {
+				if { $flag == 0 || [expr [llength $fmtlist] * 2] != [llength $tempres]} {
 					set fmtlist "%10s "
 
 					set index 0
@@ -1044,9 +1030,46 @@ namespace eval IxiaFH {
         #remove ::IxiaFH:: namespace
         set result [string map {"::IxiaFH::" ""} $result]
         Deputs "result without namespace:$result"
-        return $result
+        return [mockUpStats $result]
 	}
 
+    proc mockUpStats { stats } {
+        global stream_num
+        global trafficnamelist
+        
+		set tag "mockUpStats "
+		Logto -info "----- TAG: $tag -----"
+    
+        catch {
+            array set allStats $stats
+            for {set j 1} {$j <= $stream_num} {incr j} {
+                global stream${j}
+                set flow [subst $[subst stream${j}]]
+                if { ![info exists allStats($flow.TxFrameCount)] } {
+                    if { [lsearch $trafficnamelist $flow] < 0 } {
+                        set allStats($flow.SourceDestEndpointPair) "NA"
+                    }
+                    set allStats($flow.TxFrameCount) 0
+                    set allStats($flow.RxFrameCount) 0
+                    set allStats($flow.TxFrameRate) 0
+                    set allStats($flow.RxFrameRate) 0
+                    set allStats($flow.TxL1BitRate) "NA"
+                    set allStats($flow.RxL1BitRate) "NA"
+                    set allStats($flow.TxL2BitRate) 0
+                    set allStats($flow.RxL2BitRate) 0
+                    set allStats($flow.minLatency) "NA"
+                    set allStats($flow.maxLatency) "NA"
+                    set allStats($flow.avgLatenvy) "NA"
+                    set allStats($flow.minJitter) "NA"
+                    set allStats($flow.maxJitter) "NA"
+                    set allStats($flow.avgJitter) "NA"
+                    set allStats($flow.DroppedCount) 0
+                }
+            }
+        }
+
+        return [array get allStats]
+    }
 
 	proc result_clean {} {
 		set tag "result_clean "

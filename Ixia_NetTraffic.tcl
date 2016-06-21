@@ -442,22 +442,20 @@ Deputs "----- TAG: $tag -----"
 		ixNet setA $handle -name $this
 		ixNet commit 
 		set handle [ ixNet remapIds $handle ]
-Deputs "traffic item handle:$handle"
-
+        Deputs "traffic item handle:$handle"
 	}
 	
     set portObj $port
-Deputs "portObj:$portObj"
+    Deputs "portObj:$portObj"
     if { [ catch {
         set hPort [ $port cget -handle ]
     } ] } {
-Deputs "port:$port"
+        Deputs "port:$port"
         set port [ GetObject $port ]
-Deputs "port:$port"		
+        Deputs "port:$port"		
         set hPort [ $port cget -handle ]
     }
     set hTraffic $handle
-    
 }
 
 body Traffic::config { args  } {

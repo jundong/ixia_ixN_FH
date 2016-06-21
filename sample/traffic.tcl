@@ -3,7 +3,8 @@
 lappend auto_path {C:\Ixia\Workspace\ixia_ixN_FH}
 package req IxiaFH
 Login
-IxDebugOn
+#IxDebugOn
+IxDebugOff
 #Port @tester_to_dta1 NULL NULL ::ixNet::OBJ-/vport:1
 #Port @tester_to_dta2 NULL NULL ::ixNet::OBJ-/vport:2
 
@@ -32,7 +33,7 @@ IxDebugOn
                 -load_unit fps \
                 -load 1000 
 
-::IxiaFH::traffic_start 
+::IxiaFH::traffic_start -streamblock i1p1_s
 ::IxiaFH::traffic_stop 
 set ::result_var [::IxiaFH::results_get -counter S:*.* ]
 set ::result_var [::IxiaFH::results_get -counter S:*.* ]

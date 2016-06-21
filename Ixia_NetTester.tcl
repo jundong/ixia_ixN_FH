@@ -56,7 +56,6 @@ class Tester {
     proc synchronize {} {}
     proc saveconfig { args } {
      	return [ GetErrorReturnHeader "See GUI for automation configuration changes please." ]
-   	
     }
     proc reboot {} {}
     proc clear_traffic_stats {} {}
@@ -64,6 +63,7 @@ class Tester {
     proc getAllTx {} {}
     proc getAllFlowStats {} {}
 	proc getAllStats { statstype } {}
+	proc updateStats { stats } {}
 }
 
 proc Tester::getAllFlowStats {} {
@@ -577,7 +577,7 @@ proc Tester::getAllStats {  statstype } {
 
                set statsItem   "tx_frame_count"
                set statsVal    [ lindex $row $itemtxFramesIndex ]
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
                if {[info exists fhflag]} {
                    set statitem ${fhflag}TxFrameCount
                    lappend fhlist $statitem $statsVal
@@ -586,7 +586,7 @@ proc Tester::getAllStats {  statstype } {
                 
                set statsItem   "rx_frame_count"
                set statsVal    [ lindex $row $itemrxFramesIndex ]
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
                if {[info exists fhflag]} {
                    set statitem ${fhflag}RxFrameCount
                    lappend fhlist $statitem $statsVal
@@ -597,7 +597,7 @@ proc Tester::getAllStats {  statstype } {
 
                set statsItem   "tx_frame_rate"
                set statsVal    [ lindex $row $txFrameRateIndex ]
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
                set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
                if {[info exists fhflag]} {
                    set statitem ${fhflag}TxFrameRate
@@ -606,7 +606,7 @@ proc Tester::getAllStats {  statstype } {
                
                set statsItem   "rx_frame_rate"
                set statsVal    [ lindex $row $itemrxFrameRateIndex ]
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
               
                if {[info exists fhflag]} {
                    set statitem ${fhflag}RxFrameRate
@@ -620,7 +620,7 @@ proc Tester::getAllStats {  statstype } {
                if {$statsVal == ""} {
                    set statsVal "NA"
                }
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
               
                if {[info exists fhflag]} {
                    set statitem ${fhflag}TxL1BitRate
@@ -632,7 +632,7 @@ proc Tester::getAllStats {  statstype } {
                if {$statsVal == ""} {
                    set statsVal "NA"
                }
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
               
                if {[info exists fhflag]} {
                    set statitem ${fhflag}RxL1BitRate
@@ -641,7 +641,7 @@ proc Tester::getAllStats {  statstype } {
 
                set statsItem   "tx_l2_bit_rate"
                set statsVal    [ lindex $row $itemtxBitRateIndex ]
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
             
                if {[info exists fhflag]} {
                    set statitem ${fhflag}TxL2BitRate
@@ -650,7 +650,7 @@ proc Tester::getAllStats {  statstype } {
                
                set statsItem   "rx_l2_bit_rate"
                set statsVal    [ lindex $row $itemrxBitRateIndex ]
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
             
                if {[info exists fhflag]} {
                    set statitem ${fhflag}RxL2BitRate
@@ -667,7 +667,7 @@ proc Tester::getAllStats {  statstype } {
                 } else {
                     set statsVal 	[ expr $statsVal / 1000 ] 
                 }
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
               
                if {[info exists fhflag]} {
                    set statitem ${fhflag}minLatency
@@ -684,7 +684,7 @@ proc Tester::getAllStats {  statstype } {
                 } else {
                     set statsVal 	[ expr $statsVal / 1000 ] 
                 }
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
             
                if {[info exists fhflag]} {
                    set statitem ${fhflag}maxLatency
@@ -701,7 +701,7 @@ proc Tester::getAllStats {  statstype } {
                 } else {
                     set statsVal 	[ expr $statsVal / 1000 ] 
                 }
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
              
                if {[info exists fhflag]} {
                    set statitem ${fhflag}avgLatenvy
@@ -711,7 +711,7 @@ proc Tester::getAllStats {  statstype } {
 
                set statsItem   "min_jitter"
                set statsVal    "NA"
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
                set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
                if { [info exists fhflag ] } {
                     set statitem ${fhflag}minJitter
@@ -722,7 +722,7 @@ proc Tester::getAllStats {  statstype } {
 
                set statsItem   "max_jitter"
                set statsVal    "NA"
-        Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
                set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
                if { [info exists fhflag ] } {
                     set statitem ${fhflag}maxJitter
@@ -764,14 +764,12 @@ proc Tester::getAllStats {  statstype } {
         }
     }
   
-	return $fhstats
-					   
-		
+	return $fhstats	
 }
 
 proc Tester::getAllTx {} {
     set tag "proc Tester::getAllTx  [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
     
 	set allObj [ find objects ]
 	set allTx 0

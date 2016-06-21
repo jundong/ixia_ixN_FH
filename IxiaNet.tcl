@@ -254,9 +254,7 @@ proc loadconfig { filename } {
             lappend flownamelist [ixNet getA $trafficobj -name]
             lappend tportlist [ixNet getA $trafficobj -txPortName]
         }
-		
     }
-
 }
 
 set loginInfo	"localhost/8009"
@@ -272,7 +270,7 @@ proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
     global tportlist
     
 	set loginInfo $location
-puts "Login...$location"	
+    puts "Login...$location"	
 	if { $location == "" } {
 		set port "localhost/8009"
 	} else {
@@ -320,7 +318,7 @@ puts "Login...$location"
         if { $flag == 1 } {
             if { $filename != "null" } {
                 loadconfig $filename
-				after 15000
+				after [expr 60 * 1000]
                 
                 foreach pname $portnamelist pobj $portlist {
                     Port $pname NULL NULL $pobj
