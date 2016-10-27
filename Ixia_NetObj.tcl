@@ -22,8 +22,8 @@
 class NetObject {
     public variable handle
     method unconfig {} {
-    set tag "body NetObject::unconfig [info script]"
-Deputs "----- TAG: $tag -----"
+        set tag "body NetObject::unconfig [info script]"
+        Deputs "----- TAG: $tag -----"
 		catch {
 			ixNet remove $handle
 			ixNet commit
@@ -34,7 +34,6 @@ Deputs "----- TAG: $tag -----"
 }
 
 class EmulationObject {
-    
     inherit NetObject
     public variable portObj
     public variable hPort
@@ -42,7 +41,7 @@ class EmulationObject {
 
 	method start {} {
 		set tag "body EmulationObject::start [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		catch {
 			foreach h $handle {
 				ixNet exec start $h
@@ -53,7 +52,7 @@ Deputs "----- TAG: $tag -----"
 	
 	method stop {} {
 		set tag "body EmulationObject::stop [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		catch {
 			foreach h $handle {
 				ixNet exec stop $h
@@ -64,7 +63,7 @@ Deputs "----- TAG: $tag -----"
 	
 	method enable {} {
 		set tag "body EmulationObject::enable [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		catch {
 			ixNet setA $handle -enabled True
 			ixNet commit
@@ -74,7 +73,7 @@ Deputs "----- TAG: $tag -----"
 	
 	method disable {} {
 		set tag "body EmulationObject::disable [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		puts "+++ $handle"
 		catch {
 			ixNet setA $handle -enabled False
@@ -417,12 +416,180 @@ Deputs "inner vlan enabled..."
 }
 
 class RouterEmulationObject {
-	
 	inherit EmulationObject
-	#-- port/interface
-	public variable interface
 	#-- handle/interface
+	public variable interface
+	#-- port/interface
 	public variable rb_interface
+	
+	public variable protocol
+    public variable protocolhandle
+    
+ 	public variable routeBlock
+	
+	public variable flappingProcessId
+	
+	method start {} {
+		set tag "body RouterEmulationObject::start [info script]"
+        Deputs "----- TAG: $tag -----"
+		ixNet exec start $hPort/protocols/$protocol
+		return [ GetStandardReturnHeader ]
+	}
+	
+	method stop {} {
+		set tag "body BgpSession::start [info script]"
+        Deputs "----- TAG: $tag -----"
+		ixNet exec stop $hPort/protocols/$protocol
+		return [ GetStandardReturnHeader ]
+	}
+	
+	method flapping_route { args } {
+		set tag "body RouterEmulationObject::flapping_route [info script]"
+        Deputs "----- TAG: $tag -----"
+		
+		global loginInfo
+		set a2w 10
+		set w2a 10
+		
+		foreach { key value } $args {
+			set key [string tolower $key]
+			switch -exact -- $key {
+				-a2w {
+					set a2w [ expr $value * 1000 ]
+				}
+				-w2a {
+					set w2a [ expr $value * 1000 ]
+				}
+				-times {
+					set times $value
+				}
+				-interval {
+					set interval $value
+				}
+				-route_block {
+					set rbList $value
+					foreach rb $rbList {
+						if { ![ $rb isa RouteBlock ] } {
+							error "$errNumber(1) argument:-route_block value:$rb"
+						}
+					}
+				}
+			}
+		}
+		if { [ info exists interval ] && [ info exists a2w ] } {
+			error "$errNumber(4) -interval -a2w only one key can be used at one time."
+		}
+		if { ![ info exists rbList ] } {
+			set rbList $routeBlock(obj)
+		}
+		if { [ info exists interval ] } {
+			set a2w $interval
+			set w2a $interval
+		}
+		
+		if { ![ info exists times ] } {
+			
+			package req Thread
+			
+			set hFlapList [ list ]
+			foreach rb $rbList {
+				set hFlap [ $rb cget -handle ]
+				lappend hFlapList $hFlap
+			}
+			
+            Deputs "hFlapList:$hFlapList"
+			set id [ thread::create { 
+				proc runFlap { hFlapList } {
+					while { 1 } {
+                        puts "withdraw..."					
+						foreach handle $hFlapList {
+							ixNet setA $handle -enabled False
+						}
+						ixNet commit
+						after $w2a
+                        puts "advertise..."
+						foreach handle $hFlapList {
+							ixNet setA $handle -enabled True
+						}
+						ixNet commit
+						after $a2w
+					}
+				}
+				proc init { tclServer tclPort version } {
+					
+					package req IxTclNetwork
+					ixNet connect $tclServer \
+						-port $tclPort \
+						-version $version
+				}
+				thread::wait
+			} ]		
+            Deputs "[ thread::names ]"			
+			lappend flappingProcessId $id
+			
+			global currDir
+			global server
+			global serverPort
+			global ixN_tcl_v
+			
+            Deputs "version: $ixN_tcl_v"			
+            Deputs "server port:$serverPort"			
+            Deputs "server:$server"			
+
+			set tclLib [file dirname [info script]]/IxNetwork
+            Deputs "tcl lib:$tclLib"
+
+			set result \
+			[ thread::send $id \
+			[ list lappend auto_path $tclLib ] ]
+            Deputs "result:$result"
+			
+			set result \
+			[ thread::send $id \
+			[ list source "$currDir/ixianet.tcl" ] ]
+            Deputs "result:$result"
+			
+			set result \
+			[ thread::send $id \
+			[ list init $server $serverPort $ixN_tcl_v ] ]
+            Deputs "result:$result"
+
+			set result \
+			[ thread::send -async $id \
+			[ list runFlap $hFlapList ] ]
+            Deputs "result:$result"
+
+		}	
+		return [ GetStandardReturnHeader ]
+		
+	}
+	method flappingRouteForTimes { $routeBlockList $a2w $w2a $times } {
+		set tag "body RouterEmulationObject::flappingRouteAsync [info script]"
+        Deputs "----- TAG: $tag -----"
+		
+		for { set index 0 } { $index < $times } { incr index } {
+			foreach rb $routeBlockList {
+				$rb disable
+			}
+
+			after $w2a
+
+			foreach rb $routeBlockList {
+				$rb enable
+			}
+
+			after $a2w
+
+		}		
+	}
+	method stop_flapping_route {} {
+		set tag "body RouterEmulationObject::flapping_route [info script]"
+        Deputs "----- TAG: $tag -----"
+    	foreach pid $flappingProcessId {
+			thread::release $pid
+		}
+		return [ GetStandardReturnHeader ]
+	}
 
 }
 
@@ -462,10 +629,10 @@ body RouteBlock::config { args } {
     global errorInfo
     global errNumber
     set tag "body RouteBlock::config [info script]"
-Deputs "----- TAG: $tag -----"
-	
-#param collection
-Deputs "Args:$args "
+	Deputs "----- TAG: $tag -----"
+		
+	#param collection
+	Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -474,7 +641,8 @@ Deputs "Args:$args "
             -num {
             	set num $value
             }
-            -start_ip -            
+            -start_ip -
+			-start_address -
             -start {
 				if { [ IsIPv4Address $value ] } {
 					set type ipv4
@@ -510,9 +678,7 @@ Deputs "Args:$args "
 			}
         }
     }
-	
     return [GetStandardReturnHeader]
-
 }
 
 class Tlv {

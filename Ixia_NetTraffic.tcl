@@ -223,19 +223,19 @@ Deputs "----- TAG: $tag -----"
 class Header {
     inherit NetObject
     constructor { pduPro { pduType "APP" } } {
-	   #set EMode [ list Incrementing Decremeting Fixed Random ]
-	   set fieldModes [ list ]
-	   set fields [ list ]
-	   set fieldConfigs [ list ]
-	   set optionals [ list ]
-	   set autos [ list ]
-	   set valid 0
-	   set type $pduType
-	   set protocol $pduPro
-Deputs "type:$type\tprotocol:$protocol"
+        #set EMode [ list Incrementing Decremeting Fixed Random ]
+        set fieldModes [ list ]
+        set fields [ list ]
+        set fieldConfigs [ list ]
+        set optionals [ list ]
+        set autos [ list ]
+        set valid 0
+        set type $pduType
+        set protocol $pduPro
+        Deputs "type:$type\tprotocol:$protocol"
 		set noMac 1
 		set noIp 1
-Deputs "constructor success"		
+        Deputs "constructor success"		
     }
     method ConfigPdu { args } {}
     destructor {}
@@ -263,7 +263,7 @@ Deputs "constructor success"
 	   lappend autos $auto
 	   lappend meshes $mesh
 	   set valid 1
-Deputs "fields:$fields optionals:$optionals autos:$autos meshes:$meshes"
+        Deputs "fields:$fields optionals:$optionals autos:$autos meshes:$meshes"
     }
     # Fixed | List | Segment ( set a segment of bits from the beginning of certain field )
     # | Incrementing | Decrementing | Reserved ( for option and auto now )
@@ -427,14 +427,13 @@ class TrillHdr {
 # -- Traffic implmentation
 body Traffic::constructor { port { htraffic NULL }  } {
     set tag "body Traffic::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 	if { $htraffic != "NULL" } {
 		set handle $htraffic
 		set highLevelStream [ ixNet getL $handle configElement ]
 		set endpointSet [ ixNet getL $handle endpointSet ]
 	} else {
-
 		set root    [ixNet getRoot]
 		set handle  [ixNet add $root/traffic trafficItem]		
         set highLevelStream ""
@@ -459,7 +458,7 @@ Deputs "----- TAG: $tag -----"
 }
 
 body Traffic::config { args  } {
-# in case the handle was removed
+    # in case the handle was removed
 	if { $handle == "" } {
         Deputs "reborn traffic...."
 		set root    [ixNet getRoot]
@@ -488,8 +487,16 @@ body Traffic::config { args  } {
 	set default_mac [ lindex [ $portObj cget -intf_mac ] 0 ]
 	set default_ip  [ lindex [ $portObj cget -intf_ipv4 ] 0 ]
 	if { ( $default_ip == "0.0.0.0" ) || ( $default_ip == "" ) } {
-		set default_ip 1.1.1.1
+		set default_ip 192.85.1.2
 	}
+    Deputs "default ip:$default_ip"
+    
+	set default_ipv6  [ lindex [ $portObj cget -intf_ipv6 ] 0 ]
+	if { ( $default_ipv6 == "0:0:0:0:0:0:0:0" ) || ( $default_ipv6 == "" ) } {
+		set default_ipv6 2000::2
+	}
+    Deputs "default ip:$default_ipv6"
+    
 	if { $default_mac == "" } {
 		set default_int [ lindex [ ixNet getL [ $portObj cget -handle ] interface ] 0 ]
         Deputs "default interface:$default_int"
@@ -502,7 +509,6 @@ body Traffic::config { args  } {
 		}
 	}
     Deputs "default mac:$default_mac"
-    Deputs "default ip:$default_ip"
 
     global errorInfo
     global errNumber
@@ -730,11 +736,11 @@ body Traffic::config { args  } {
 		set highLevelStream [ ixNet getList $handle configElement ]
 			
 		Deputs "endpointSet: $endpointSet"
-	Deputs Step70
+        Deputs Step70
 		#-- for every stream is not bi-direction, thus only one highlevelstream will be created when creating endpointSet
 		#set highLevelStream [ ixNet getList $handle configElement ]
 		
-	Deputs "stream handle:$highLevelStream"
+        Deputs "stream handle:$highLevelStream"
 	    foreach hStream $highLevelStream {
 			set ethStack [lindex [ ixNet getList $hStream stack ] 0]
 			set obj [ GetField $ethStack destinationAddress ]
@@ -747,7 +753,7 @@ body Traffic::config { args  } {
 					-singleValue "00:00:00:00:00:01"
 		}
 		ixNet commit
-	Deputs StepDone
+        Deputs StepDone
     
         # set hlHandle [lindex [ixNet getL  $handle highLevelStream] end ]
         # set hlName [ixNet getA $hlHandle -name]
@@ -759,149 +765,159 @@ body Traffic::config { args  } {
         # }
         # ixNet setA $hlHandle -name $hlName
         # ixNet commit
-
-		
 	}	
     
     #-- quick stream and advanced stream
     if { [ info exists src ] && [ info exists dst ] } {
-	
 	   if { [ IsIPv4Address $src ] && [ IsIPv4Address $dst ] } {
-#-- quick stream IPv4
-Deputs "Traffic type:quick stream IPv4"
-		  #-- Create quick stream
+            #-- quick stream IPv4
+            Deputs "Traffic type:quick stream IPv4"
+            #-- Create quick stream
 			##--add judgement for traffic reconfig
 			if { ( [ info exists highLevelStream ] == 0 ) || ( [ llength $highLevelStream ] == 0 ) } {
 				CreateRawStream $enable_sig
 			}
-		  #-- append custom stack
-		  #default stack list will be ethernet and fcs
-		  set stackList [ ixNet getList $highLevelStream stack ]
-		  ixNet exec append [ lindex $stackList 0 ] [ GetProtocolTemp ipv4 ]
-		  #-- modify the custom stack field
-		  set customStack [ lindex [ ixNet getList $highLevelStream stack ] 1 ]
-		  set srcIpField [ GetField $customStack srcIp ]
-		  set dstIpField [ GetField $customStack dstIp ]
-		  ixNet setA $srcIpField -singleValue $src
-		  ixNet setA $dstIpField -singleValue $dst
-		  ixNet commit
+            #-- append custom stack
+            #default stack list will be ethernet and fcs
+            set stackList [ ixNet getList $highLevelStream stack ]
+            ixNet exec append [ lindex $stackList 0 ] [ GetProtocolTemp ipv4 ]
+            #-- modify the custom stack field
+            set customStack [ lindex [ ixNet getList $highLevelStream stack ] 1 ]
+            set srcIpField [ GetField $customStack srcIp ]
+            set dstIpField [ GetField $customStack dstIp ]
+            ixNet setA $srcIpField -singleValue $src
+            ixNet setA $dstIpField -singleValue $dst
+            ixNet commit
 	   } elseif { [ IsIPv6Address $src ] && [ IsIPv6Address $dst ] } {
-#-- quick stream IPv6
-Deputs "Traffic type:quick stream IPv6"
-		  #-- Create quick stream
+            #-- quick stream IPv6
+            Deputs "Traffic type:quick stream IPv6"
+            #-- Create quick stream
 			##--add judgement for traffic reconfig
 			if { ( [ info exists highLevelStream ] == 0 ) || ( [ llength $highLevelStream ] == 0 ) } {
 				CreateRawStream 
 			}
-		  #-- append custom stack
-		  #default stack list will be ethernet and fcs
-		  set stackList [ ixNet getList $highLevelStream stack ]
-		  ixNet exec append [ lindex $stackList 0 ] [ GetProtocolTemp ipv6 ]
-		  #-- modify the custom stack field
-		  set customStack [ lindex [ ixNet getList $highLevelStream stack ] 1 ]
-		  set srcIpField [ GetField $customStack srcIp ]
-		  set dstIpField [ GetField $customStack dstIp ]
-		  ixNet setA $srcIpField -singleValue $src
-		  ixNet setA $dstIpField -singleValue $dst
-		  ixNet commit            
+            #-- append custom stack
+            #default stack list will be ethernet and fcs
+            set stackList [ ixNet getList $highLevelStream stack ]
+            ixNet exec append [ lindex $stackList 0 ] [ GetProtocolTemp ipv6 ]
+            #-- modify the custom stack field
+            set customStack [ lindex [ ixNet getList $highLevelStream stack ] 1 ]
+            set srcIpField [ GetField $customStack srcIp ]
+            set dstIpField [ GetField $customStack dstIp ]
+            ixNet setA $srcIpField -singleValue $src
+            ixNet setA $dstIpField -singleValue $dst
+            ixNet commit            
 	   } else {
-#Deputs "objects:[find objects]"
+        #Deputs "objects:[find objects]"
 		set srcHandle [ list ]
 		foreach srcEndpoint $src {
-Deputs "src:$srcEndpoint"
+            Deputs "src:$srcEndpoint"
 			set srcObj [ GetObject $srcEndpoint ]
-Deputs "srcObj:$srcObj"			
+            Deputs "srcObj:$srcObj"			
 			if { $srcObj == "" } {
-			Deputs "illegal object...$srcObj"
+                Deputs "illegal object...$srcObj"
 				set srcObj $portObj
-			# error "$errNumber(1) key:src value:$src (Not an object)"                
+                # error "$errNumber(1) key:src value:$src (Not an object)"                
 			}
 			if { ( [ $srcObj isa Port ] == 0 ) && ( [ $srcObj isa EmulationObject ] == 0 ) && ( [ $srcObj isa Host ] == 0 ) } {
-			Deputs "illegal object...$src"
-			 error "$errNumber(1) key:src value:$src (Not a port or emulation object)"                
+                Deputs "illegal object...$src"
+                error "$errNumber(1) key:src value:$src (Not a port or emulation object)"                
 			}
 			if { [ $srcObj isa Port ] } {
-			Deputs Step110
+                Deputs Step110
 				set srcHandle [ concat $srcHandle "[ $srcObj cget -handle ]/protocols" ]
 			} else {
-			Deputs Step120
+                Deputs Step120
 				set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
+                catch {
+                    if { [ llength [ ixNet getL $dstHandle ipv6 ] ] > 0 } {
+                        set trafficType ipv6
+                    }
+                }
 			}
 		}
-Deputs "src handle:$srcHandle"
+        Deputs "src handle:$srcHandle"
 
 		set dstHandle [ list ]
-Deputs "dst list:$dst"		
+        Deputs "dst list:$dst"		
 		foreach dstEndpoint $dst {
-Deputs "dst:$dstEndpoint"
+            Deputs "dst:$dstEndpoint"
 			set dstObj [ GetObject $dstEndpoint ]
-Deputs "dstObj:$dstObj"			
+            Deputs "dstObj:$dstObj"			
 			if { $dstObj == "" } {
-			Deputs "illegal object...$dstEndpoint"
-			 error "$errNumber(1) key:dst value:$dst"                
+                Deputs "illegal object...$dstEndpoint"
+                error "$errNumber(1) key:dst value:$dst"                
 			}
 			if { ( [ $dstObj isa Port ] == 0 ) && ( [ $dstObj isa EmulationObject ] == 0 ) && ( [ $dstObj isa Host ] == 0 ) } {
-			Deputs "illegal object...$dst"
-			 error "$errNumber(1) key:dst value:$dst (Not a port or emulation object)"                
+                Deputs "illegal object...$dst"
+                error "$errNumber(1) key:dst value:$dst (Not a port or emulation object)"                
 			}
 			Deputs Step100
 			if { [ $dstObj isa Port ] } {
-			Deputs Step130
+                Deputs Step130
 				set dstHandle [ concat $dstHandle "[ $dstObj cget -handle ]/protocols" ]
 			} else {
 				set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
+                catch {
+                    if { [ llength [ ixNet getL $dstHandle ipv6 ] ] > 0 } {
+                        set trafficType ipv6
+                    }
+                }
 			}
 		}
-#-- advanced stream Ports/Emulations
-Deputs "Traffic type: advanced stream:$trafficType"
-		  #-- Create advanced stream
-		  #-- create trafficItem      
-		  if { $bidirection } {
-			set bi True
-		  } else {
-			set bi False
-		  }
-		  ixNet setMultiA $handle \
-			 -trafficItemType l2L3 \
-			 -biDirectional $bi \
-			 -routeMesh oneToOne \
-			 -srcDestMesh oneToOne \
-			 -trafficType $trafficType ;#can be ipv4 or ipv6 or ethernetVlan
-			if { $enable_sig } {
-				ixNet setA $handle/tracking -trackBy sourceDestPortPair0
-				ixNet commit
-			}
-Deputs "add endpointSet..."
-		  #-- add endpointSet
-		  set endpointSet [ixNet add $handle endpointSet]
-Deputs "src:$srcHandle"
-		  ixNet setA $endpointSet -sources $srcHandle
-Deputs "dst:$dstHandle"
-		  ixNet setA $endpointSet -destinations $dstHandle
-Deputs Step170
-		  ixNet commit
-Deputs Step180
-		  #set handle      [ ixNet remapIds $handle ]
-Deputs "handle:$handle"
-		  set endpointSet [ ixNet remapIds $endpointSet ]
-Deputs "ep:$endpointSet"
-		  #-- for every stream is not bi-direction, thus only one highlevelstream will be created
-#            set highLevelStream [ ixNet getList $handle highLevelStream ]
-		  set highLevelStream [ ixNet getList $handle configElement ]
-		  # foreach hStream $highLevelStream {
-			# set ethStack [lindex [ ixNet getList $hStream stack ] 0]
-			# set obj [ GetField $ethStack destinationAddress ]
-			# ixNet setMultiAttrs $obj \
-					# -valueType singleValue \
-					# -singleValue "00:00:94:00:00:01"
-			# set obj [ GetField $ethStack sourceAddress ]
-			# ixNet setMultiAttrs $obj \
-					# -valueType singleValue \
-					# -singleValue "00:00:00:00:00:01"
+        #-- advanced stream Ports/Emulations
+        Deputs "Traffic type: advanced stream:$trafficType"
+        #-- Create advanced stream
+        #-- create trafficItem      
+        if { $bidirection } {
+          set bi True
+        } else {
+          set bi False
+        }
+        ixNet setMultiA $handle \
+           -trafficItemType l2L3 \
+           -biDirectional $bi \
+           -routeMesh oneToOne \
+           -srcDestMesh oneToOne \
+           -trafficType $trafficType ;#can be ipv4 or ipv6 or ethernetVlan
+          if { $enable_sig } {
+              ixNet setA $handle/tracking -trackBy sourceDestPortPair0
+              ixNet commit
+          }
+          Deputs "add endpointSet..."
+          #-- add endpointSet
+          set endpointSet [ixNet add $handle endpointSet]
+          Deputs "ep:$endpointSet"
+          ixNet commit
+          set endpointSet [ ixNet remapIds $endpointSet ]
+          
+          Deputs "src:$srcHandle"
+          ixNet setA $endpointSet -sources $srcHandle
+          
+          Deputs "dst:$dstHandle"
+          ixNet setA $endpointSet -destinations $dstHandle
+          Deputs Step170
+          ixNet commit
+          Deputs Step180
+          Deputs "handle:$handle"
+
+          #-- for every stream is not bi-direction, thus only one highlevelstream will be created
+          # set highLevelStream [ ixNet getList $handle highLevelStream ]
+          set highLevelStream [ ixNet getList $handle configElement ]
+          # foreach hStream $highLevelStream {
+          # set ethStack [lindex [ ixNet getList $hStream stack ] 0]
+          # set obj [ GetField $ethStack destinationAddress ]
+          # ixNet setMultiAttrs $obj \
+                  # -valueType singleValue \
+                  # -singleValue "00:00:94:00:00:01"
+          # set obj [ GetField $ethStack sourceAddress ]
+          # ixNet setMultiAttrs $obj \
+                  # -valueType singleValue \
+                  # -singleValue "00:00:00:00:00:01"
 		# }
 		ixNet commit
-Deputs "highLevelStream:$highLevelStream"
-Deputs Step190
+        Deputs "highLevelStream:$highLevelStream"
+        Deputs Step190
         # set hlHandle [lindex [ixNet getL  $handle highLevelStream] end ]
 		# Deputs "hlHandle: $hlHandle"
         # set hlName [ixNet getA $hlHandle -name]
@@ -930,35 +946,35 @@ Deputs Step190
     }
     #-- configure raw pdu or config advanced stream with L3+ pdu
     if { [ info exists pdu ] } {
-Deputs Step100
-	   # if { [ info exists src ] || [ info exists dst ] } {
-		  # error "$errNumber(4) key: pdu | conflict key: src/dst"            
-	   # }
-	   #-- Create quick stream
-Deputs "Traffic type:custom stream IPv4"
+        Deputs Step100
+        # if { [ info exists src ] || [ info exists dst ] } {
+           # error "$errNumber(4) key: pdu | conflict key: src/dst"            
+        # }
+        #-- Create quick stream
+        Deputs "Traffic type:custom stream IPv4"
 		##--add judgement for traffic reconfig
 		if { ( [ info exists highLevelStream ] == 0 ) || ( [ llength $highLevelStream ] == 0 ) } {
 			CreateRawStream $enable_sig
 		}
 		foreach hStream $highLevelStream {
-		   set flagPduObj  1
-	Deputs "pdu:$pdu"
-		   foreach head $pdu {
-	Deputs "head:$head"
-			  set head [ GetObject $head ]
-	Deputs "head obj:$head"
-			  if { $head != "" } {
-				 #-- pdu objects
-				 if { [ $head isa NetObject ] } {
-					if { [ $head isa Header ] == 0 } {
-						error "$errNumber(1) key: pdu value: $head (Not a Header)"                
-					}
-				 } else {
-					error "$errNumber(1) key: pdu value: $head (Not an IxiaNet Object)"                
-				 }
-			  } else {
-				 set flagPduObj 0
-				 break
+            set flagPduObj  1
+            Deputs "pdu:$pdu"
+            foreach head $pdu {
+                Deputs "head:$head"
+                set head [ GetObject $head ]
+                Deputs "head obj:$head"
+                if { $head != "" } {
+                    #-- pdu objects
+                    if { [ $head isa NetObject ] } {
+                       if { [ $head isa Header ] == 0 } {
+                           error "$errNumber(1) key: pdu value: $head (Not a Header)"                
+                       }
+                    } else {
+                       error "$errNumber(1) key: pdu value: $head (Not an IxiaNet Object)"                
+                    }
+                } else {
+				set flagPduObj 0
+				break
 			  }
 		   }
 		   if { $flagPduObj } {
@@ -1071,9 +1087,9 @@ Deputs "Traffic type:custom stream IPv4"
 				 }
 	Deputs "Stack:$stack"
 				 set appendHeader $stack
-	Deputs "Stack list:[ ixNet getList $hStream stack ]"
-
-	Deputs Step43
+                Deputs "Stack list:[ ixNet getList $hStream stack ]"
+            
+                Deputs Step43
 				 # Modify fields
 				 # -- modify eth src mac
 				
@@ -1088,32 +1104,39 @@ Deputs "Traffic type:custom stream IPv4"
 				 # -- modify ip src ip
 				 if { [ $name isa Ipv4Hdr ] } {
 				    if {[$name cget -type ] != "MOD"} {
-						 if { [ $name cget -noIp ] } {
-					 Deputs "config default ip..."
-							 $name config -src $default_ip
-						 }
+						if { [ $name cget -noIp ] } {
+                            Deputs "config default ip..."
+							$name config -src $default_ip
+						}
 					}
 				 }
-				
-					 # -- modify arp src mac and src ip
-					 # IxDebugOn
-				 if { [ $name isa ArpHdr ] } {
-			  Deputs "arp header"
-					  if { [ $name cget -noMac ] } {
-			  Deputs "config default mac..."
-						  $name config -sender_mac_addr $default_mac 
-					  }
-					  if { [ $name cget -noIp ] } {
-				 Deputs "config default ip..."
-						 $name config -sender_ipv4_addr $default_ip
-					 }
+				 # -- modify ip src ip
+				 if { [ $name isa Ipv6Hdr ] } {
+				    if {[$name cget -type ] != "MOD"} {
+						if { [ $name cget -noIp ] } {
+                            Deputs "config default ip..."
+							$name config -src $default_ipv6
+						}
+					}
 				 }
+                # -- modify arp src mac and src ip
+                # IxDebugOn
+                if { [ $name isa ArpHdr ] } {
+                    Deputs "arp header"
+                    if { [ $name cget -noMac ] } {
+                        Deputs "config default mac..."
+                        $name config -sender_mac_addr $default_mac 
+                    }
+                    if { [ $name cget -noIp ] } {
+                        Deputs "config default ip..."
+                        $name config -sender_ipv4_addr $default_ip
+                    }
+                }
 				
-				 
-				 # IxDebugOff
+                # IxDebugOff
 
-				 if { $needMod == 0 } {
-	Deputs Step45
+                if { $needMod == 0 } {
+                    Deputs Step45
 					incr index
 					continue
 				 }
@@ -1353,7 +1376,7 @@ Deputs "fullMesh:[ixNet getA $obj -fullMesh ]"
 				 error "$errNumber(2) key: pdu(pdu is not hex or object)"
 			  } else {
 				 #-- Create quick stream
-	Deputs "Traffic type:custom stream IPv4 raw pdu"
+                Deputs "Traffic type:custom stream IPv4 raw pdu"
 			  #-- redundency
 				 #CreateRawStream 
 				 #-- append custom stack
@@ -1721,9 +1744,9 @@ Deputs "protocol to match:$pro"
 
 body Traffic::CreateQuickStream {} {
     set tag "body Traffic::CreateQuickStream [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     #-- create trafficItem
-Deputs Step10
+    Deputs Step10
     set quickItem   [ GetQuickItem ]
     if { $quickItem == "" } {
 	   ixNet setMultiA $handle -trafficItemType quick -trafficType raw
@@ -1731,30 +1754,30 @@ Deputs Step10
 	   set handle $quickItem 
     }
     #-- add endpointSet
-Deputs "handle $handle"
+    Deputs "handle $handle"
     set endpointSet [ixNet add $handle endpointSet]
-Deputs "port:$hPort"
+    Deputs "port:$hPort"
     ixNet setMultiA $endpointSet -sources "$hPort/protocols"
-Deputs Step40
+    Deputs Step40
     ixNet commit
-Deputs Step50
+    Deputs Step50
     set handle      [ ixNet remapIds $handle ]
-Deputs Step60
+    Deputs Step60
     set endpointSet [ ixNet remapIds $endpointSet ]
-Deputs Step70
+    Deputs Step70
     #-- for every stream is not bi-direction, thus only one highlevelstream will be created when creating endpointSet
     set highLevelStream [ lindex [ ixNet getList $handle highLevelStream ] end ]
-Deputs StepDone
+    Deputs StepDone
 }
 body Traffic::CreateRawStream { { enable_sig 1 } } {
     set tag "body Traffic::CreateRawStream [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     #-- create trafficItem
-Deputs Step10
+    Deputs Step10
     ixNet setMultiA $handle -trafficItemType l2L3 -trafficType raw
     #-- add endpointSet
-# IxDebugOn	
-Deputs "handle $handle"
+    # IxDebugOn	
+    Deputs "handle $handle"
     set endpointSet [ixNet add $handle endpointSet]
 Deputs "port:$hPort"
     set dests [list]
@@ -3437,11 +3460,11 @@ Deputs Step10
 #        $pdu Clear
     set pro [ string tolower $protocol ]
 
-Deputs "Pro: $pro"
+    Deputs "Pro: $pro"
     if { $pro != "ipv4" } {
 	   error "$errNumber(3) key:protocol value:$pro"
     }
-Deputs Step50
+    Deputs Step50
     SetProtocol IPv4
     #--------------------------
     #-----Config TOS ------
@@ -3640,9 +3663,8 @@ body Ipv6Hdr::config { args } {
     global errorInfo
     global errNumber
 
-
     set tag "body Ipv6Hdr::config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
     set saoffset 0
     set daoffset 0
@@ -3653,8 +3675,8 @@ Deputs "----- TAG: $tag -----"
 	set darepeat 1
 	set sarepeat 1
     set EType [ list Fixed Random Incrementing Decrementing ]
-Deputs Step10
-# param collection
+    Deputs Step10
+    # param collection
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {
@@ -3701,13 +3723,13 @@ Deputs Step10
 		  }
 		  -src_step {
 			 set trans [ UnitTrans $value ]
-Deputs "Unit trans result for IPv6 Header SourceAddressStep: $trans"
+            Deputs "Unit trans result for IPv6 Header SourceAddressStep: $trans"
 			 if { [ string is integer $trans ] } {
 				set saStep $trans
 			 } else {
 				set saStep $value
 			 }
-Deputs "saStep:$saStep"
+            Deputs "saStep:$saStep"
 		  }
 		  -src_mod {
 			 set trans [ UnitTrans $value ]
@@ -3723,7 +3745,7 @@ Deputs "saStep:$saStep"
 		  -dst_num {
 			 set trans [ UnitTrans $value ]
 			 if { [ string is integer $trans ] } {
-Deputs "Dst addr num: $trans"
+                Deputs "Dst addr num: $trans"
 				set darepeat $trans
 			 } else {
 				error "$errNumber(1) key:$key value:$value"
@@ -3777,7 +3799,7 @@ Deputs "Dst addr num: $trans"
     }
 
     set pro [ string tolower $protocol ]
-Deputs "Pro: $pro"
+    Deputs "Pro: $pro"
     if { $pro != "ipv6" } {
 	   error "$errNumber(3) key:protocol value:$pro"
     }
@@ -3827,10 +3849,10 @@ Deputs "Pro: $pro"
 			 Incrementing {
 				if { [ info exists sarepeat ] && [ info exists saStep ] } {
 				    if { [ IsIPv6Address $saStep ] == 0 } {
-Deputs "saStep:$saStep"
-Deputs "saoffset:$saoffset"							
-					   set saStep [GetIpv6Step $saoffset $saStep]
-Deputs "saStep:$saStep"
+                        Deputs "saStep:$saStep"
+                        Deputs "saoffset:$saoffset"							
+                        set saStep [GetIpv6Step $saoffset $saStep]
+                        Deputs "saStep:$saStep"
 				    }
 				    AddFieldMode $samode
 				    AddField srcIP
@@ -3855,11 +3877,11 @@ Deputs "saStep:$saStep"
 			 Incrementing {
 				if { [ info exists darepeat ] && [ info exists daStep ] } {
 				    if { [ IsIPv6Address $daStep ] == 0 } {
-					   #set daoffset [ expr 128 - $daoffset ]
-Deputs "daoffset:$daoffset"							
-					   set daStep [GetIpv6Step $daoffset $daStep]
-Deputs "daStep:$daStep"
-						}                        
+                        #set daoffset [ expr 128 - $daoffset ]
+                        Deputs "daoffset:$daoffset"							
+                        set daStep [GetIpv6Step $daoffset $daStep]
+                        Deputs "daStep:$daStep"
+					}                        
 						
 				    AddFieldMode $damode
 				    AddField dstIP
@@ -3886,9 +3908,8 @@ body TcpHdr::config { args } {
     global errorInfo
     global errNumber
 
-
     set tag "body TcpHdr::config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 		  
     set EType [ list Fixed Random Incrementing Decrementing ]
     set spmode Incrementing
@@ -3898,7 +3919,7 @@ Deputs "----- TAG: $tag -----"
     set spcount 1
     set dpcount 1
     set level 2
-# param collection
+    # param collection
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {

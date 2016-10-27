@@ -81,7 +81,6 @@ namespace eval IxiaFH {
 					set sp [file split $currDir]
 					set sp [lreplace $sp end end logs]
 				}
-
 				set FHlogname [eval file join $sp $FHlogfile]
 			}
 		}
@@ -328,7 +327,6 @@ namespace eval IxiaFH {
 					error "$errNumber(2) :hw_id:$hw_id"
 				}				    
 			} else {
-                puts "aaaa"
                 Logto -info "offline :$portn"		
 				Port $portn NULL NULL NULL 1
 			}
@@ -724,7 +722,6 @@ namespace eval IxiaFH {
 										   -incrementTo    $rgincrto
 				}
 				
-				ixNet commit
 				ixNet commit
 			}
 		
@@ -1249,7 +1246,6 @@ namespace eval IxiaFH {
 			
 					traffic_config -name $name -srcmac 00:00:94:00:00:02 -dstmac 00:00:01:00:00:01 -srcip 192.85.1.2  -dstip 192.0.0.1 
 				  } else {
-				   
 				    set thandle ""
 				    foreach tinfo $trafficinfo {
 					Deputs $tinfo
@@ -1292,11 +1288,11 @@ namespace eval IxiaFH {
 					set thandle [$tname cget -handle]
 					Deputs "thandle:$thandle"
 					foreach fhandle [ ixNet getL $thandle highLevelStream ] {
-					Deputs "fhandle: $fhandle"
-					lappend flownamelist [ixNet getA $fhandle -name]
-					Deputs "fname: $flownamelist"
-					lappend flowlist $fhandle
-					traffic_config -name $name -srcmac 00:00:94:00:00:02 -dstmac 00:00:01:00:00:01 -srcip 192.85.1.2  -dstip 192.0.0.1 
+                        Deputs "fhandle: $fhandle"
+                        lappend flownamelist [ixNet getA $fhandle -name]
+                        Deputs "fname: $flownamelist"
+                        lappend flowlist $fhandle
+                        traffic_config -name $name -srcmac 00:00:94:00:00:02 -dstmac 00:00:01:00:00:01 -srcip 192.85.1.2  -dstip 192.0.0.1 
 					}
 		   
 				}
@@ -1368,13 +1364,11 @@ namespace eval IxiaFH {
 			set obj_type [ string tolower $obj_type]
             switch -exact -- $obj_type {
 			    device {
-			
 				    Host $hostName $portn
 					lappend hostlist $hostName
 					if { $flag ==0 } {
 						$hostName config -count 1
 					}
-					
 				}
 				device.ospfv2 {
 				    set ospfInt     [ $hostName cget -handle    ]
@@ -1383,7 +1377,7 @@ namespace eval IxiaFH {
 					set session [ lindex [split $name "."] 1 ]
 					set session [ ::IxiaFH::nstype $session  ] 
 					puts "session:$session"
-					eval OspfSession $lastName $portn "null" $ospfInt 
+					eval Ospfv2Session $lastName $portn "null" $ospfInt 
 					$hostName SetSession $session
 					$lastName config -ospf_id $ospfID
 					lappend deviceList $lastName
@@ -1405,6 +1399,40 @@ namespace eval IxiaFH {
 				    RouteBlock $lastName 
 					$lastName SetUpDevice $UpDevice
 					$lastName config -active 1 -start_ip 192.0.1.0 -prefix_len 24 -metric_lsa 1	
+					set origin externalType1
+					#set origin externalType2
+					$UpDevice set_route -route_block $lastName -origin $origin
+					
+				}
+				device.ospfv3 {
+				    set ospfInt     [ $hostName cget -handle    ]
+					set ospfID      [ $hostName cget -ipv4Addr  ]
+					puts "ospfv3Int: $ospfInt"
+					set session [ lindex [split $name "."] 1 ]
+					set session [ ::IxiaFH::nstype $session  ] 
+					puts "session:$session"
+					eval Ospfv3Session $lastName $portn "null" $ospfInt 
+					$hostName SetSession $session
+					$lastName config -ospf_id $ospfID
+					lappend deviceList $lastName
+				}
+				device.ospfv3.interarea_prefixlsa {
+					set UpDevice [ lindex [split $name "."] 1 ]
+					set UpDevice [ ::IxiaFH::nstype $UpDevice   ]
+					puts "UpDevice:$UpDevice"
+				    RouteBlock $lastName 
+					$lastName SetUpDevice $UpDevice
+					$lastName config -active 1 -start_ip 2000::1 -prefix_len 64 -metric_lsa 1	
+					set origin sameArea
+					$UpDevice set_route -route_block $lastName -origin $origin	
+				}
+				device.ospfv3.externalsa {
+					set UpDevice [ lindex [split $name "."] 1 ]
+					set UpDevice [ ::IxiaFH::nstype $UpDevice   ]
+					puts "UpDevice:$UpDevice"
+				    SimulatedRouter $lastName 
+					$lastName SetUpDevice $UpDevice
+					$lastName config -active 1 -start_ip 2000::1 -prefix_len 64 -metric_lsa 1
 					set origin externalType1
 					#set origin externalType2
 					$UpDevice set_route -route_block $lastName -origin $origin
@@ -1539,14 +1567,11 @@ namespace eval IxiaFH {
 					${lastName}_group config -group_num 1 \
 					    -group_start_ip "225.0.0.1" \
 						-group_ip_step "0.0.0.1"
-					$lastName join_group -group ${lastName}_group
-					
+					$lastName join_group -group ${lastName}_group					
 				}
 				device.igmp_querier {
 				    set igmpInt     [ $hostName cget -handle    ]										
 				    IgmpQuerier $lastName $portn "null" $igmpInt
-					
-					
 				}
 				device.mld {
 				    set mldInt     [ $hostName cget -handle    ]										
@@ -1608,7 +1633,6 @@ namespace eval IxiaFH {
 			    switch -exact -- $key {
 				    -name {
 					    set name [lindex [split $value "."] end]
-						
 				    }
 					-obj_type {
 						set obj_type $value
@@ -1647,6 +1671,26 @@ namespace eval IxiaFH {
 					}
 					externalsa -
 					device.ospfv2.externalsa {
+						eval $dname config $args_value_pairs
+						set UpDevice [ $dname cget -up_device ]
+						puts "UpDevice:$UpDevice"
+						set origin externalType1
+						#set origin externalType2
+						$UpDevice set_route -route_block $dname -origin $origin
+					}
+					ospfv3 -
+					device.ospfv3 {						
+						eval $dname config $args_value_pairs
+					}
+					interarea_prefixlsa -
+					device.ospfv3.interarea_prefixlsa {
+						eval $dname config $args_value_pairs
+						set UpDevice [ $dname cget -up_device ]
+						puts "UpDevice:$UpDevice"
+						set origin sameArea
+						$UpDevice set_route -route_block $dname -origin $origin				
+					}
+					device.ospfv3.externalsa {
 						eval $dname config $args_value_pairs
 						set UpDevice [ $dname cget -up_device ]
 						puts "UpDevice:$UpDevice"
@@ -1871,8 +1915,6 @@ namespace eval IxiaFH {
                 Logto -info "succeed to config device $obj_name"
 			}
 			
-			
-			
 	        set arg [lindex $args [expr $j+1]]
 	}
 	return 1
@@ -1923,6 +1965,8 @@ namespace eval IxiaFH {
 						#${streamobj}VlanH2${headindex} ChangeType MOD					
 						Ipv4Hdr ${streamobj}ipv4H${headindex}
 						#${streamobj}ipv4H${headindex} ChangeType MOD
+						Ipv6Hdr ${streamobj}ipv6H${headindex}
+						#${streamobj}ipv6H${headindex} ChangeType MOD
 						UdpHdr ${streamobj}udpH${headindex}
 						#${streamobj}udpH${headindex} ChangeType MOD
 						TcpHdr ${streamobj}tcpH${headindex}
@@ -1939,7 +1983,7 @@ namespace eval IxiaFH {
 							} 
 						}
 						foreach pro [ ixNet getList $highLevelStream stack ] {
-		Deputs "pro:$pro"
+                            Deputs "pro:$pro"
 							if { [ regexp -nocase IPv4 $pro ] } {
 								${streamobj}ipv4H${headindex} ChangeType MOD
 							}
@@ -1949,6 +1993,7 @@ namespace eval IxiaFH {
 							${streamobj}VlanH${headindex} ChangeType MOD
 							${streamobj}VlanH2${headindex} ChangeType MOD
 							${streamobj}ipv4H${headindex} ChangeType MOD
+                            ${streamobj}ipv6H${headindex} ChangeType MOD
 							${streamobj}udpH${headindex} ChangeType MOD
 							${streamobj}tcpH${headindex} ChangeType MOD
 						}						
@@ -1993,7 +2038,6 @@ namespace eval IxiaFH {
 					-load_mode {
 						set value [ string tolower $value ]
 						if { [ lsearch -exact $Eload_mode $value ] >= 0 } {
-						  
 							set load_mode $value
 						} else {
 							error "$errNumber(1) key:$key value:$value"
@@ -2004,13 +2048,10 @@ namespace eval IxiaFH {
 					-load_unit {
 						set load_unit $value						 
 						set cmd  "${cmd}-load_unit $load_unit "
-						
 					}
 					-load {				
-						set load $value
-							
-						set cmd "${cmd}-stream_load $load "
-							
+						set load $value	
+						set cmd "${cmd}-stream_load $load "	
 					}
 					-srcbinding {
 						set srcbinding $value
@@ -2085,12 +2126,16 @@ namespace eval IxiaFH {
 						set dstmac_mask $value
 					}
 					-srcip {
-						puts "123456"
 						set srcip $value
-						set srcip_count 1
-						set srcip_type incr
-						set srcip_step "0.0.0.1"
-
+                        if { [info exists srcip_count] } {
+                            set srcip_count 1
+                        }
+                        if { [info exists srcip_type] } {
+                            set srcip_type incr
+                        }
+                        if { [info exists srcip_step] } {
+                            set srcip_step "0.0.0.1"
+                        }
 						if { [lsearch $headlist ${streamobj}ipv4H${headindex}]!= -1} {
 						} else { 
 							lappend headlist ${streamobj}ipv4H${headindex}
@@ -2098,7 +2143,6 @@ namespace eval IxiaFH {
 					}
 					-srcip_count {
 						set srcip_count $value 
-
 					}
 					-srcip_type {
 								
@@ -2118,9 +2162,15 @@ namespace eval IxiaFH {
 					}
 					-dstip {
 						set dstip $value
-						set dstip_count 1
-						set dstip_type incr
-						set dstip_step "0.0.0.1"
+                        if { [info exists dstip_count] } {
+                            set dstip_count 1
+                        }
+                        if { [info exists dstip_type] } {
+                            set dstip_type incr
+                        }
+                        if { [info exists dstip_step] } {
+                            set dstip_step "0.0.0.1"
+                        }
 						if { [lsearch $headlist ${streamobj}ipv4H${headindex}]!= -1} {
 						} else { 
 							lappend headlist ${streamobj}ipv4H${headindex}
@@ -2323,6 +2373,71 @@ namespace eval IxiaFH {
 					-rxport -
 					-port {
 					}
+					-srcipv6 {
+						set srcipv6 $value
+                        if { ![info exists srcipv6_count] } {
+                            set srcipv6_count 1
+                        }
+						if { ![info exists srcipv6_type] } {
+                            set srcipv6_type incr
+                        }
+                        if { ![info exists srcipv6_step] } {
+                            set srcipv6_step "0:0:0:0:0:0:0:1"
+                        }
+						if { [lsearch $headlist ${streamobj}ipv6H${headindex}]!= -1} {
+						} else { 
+							lappend headlist ${streamobj}ipv6H${headindex}
+						}
+					}
+					-srcipv6_count {
+						set srcipv6_count $value 
+					}
+					-srcipv6_type {
+								
+						if {$value == "increment" } {
+							set srcipv6_type incr
+						}
+						if {$value == "decrement" } {
+							set srcipv6_type decr
+						}
+					}
+					-srcipv6_step {					
+						set srcip_step $value
+					}
+					-dstipv6 {
+						set dstipv6 $value
+                        if { ![info exists dstipv6_count] } {
+                            set dstipv6_count 1
+                        }
+                        if { ![info exists dstipv6_type] } {
+                            set dstipv6_type incr
+                        }
+                        if { ![info exists dstipv6_step] } {
+                            set dstipv6_step "0:0:0:0:0:0:0:1"
+                        }
+						if { [lsearch $headlist ${streamobj}ipv6H${headindex}]!= -1} {
+						} else { 
+							lappend headlist ${streamobj}ipv6H${headindex}
+						}
+					}
+					-dstipv6_count {
+						set dstipv6_count $value
+					}
+					-dstipv6_type {
+												
+						if {$value == "increment" } {
+							set dstipv6_type incr
+						}
+						if {$value == "decrement" } {
+							set dstipv6_type decr
+						}
+					}
+					-dstipv6_step {
+						set dstipv6_step $value
+					}
+					-ipv6_gateway {
+						set ipv6_gateway $value
+					}
 					default {
 						error "$errNumber(3) key:$key value:$value"
 					}
@@ -2381,11 +2496,18 @@ namespace eval IxiaFH {
 			if {[info exists srcip]} {
 				${streamobj}ipv4H${headindex} config -src $srcip -src_num $srcip_count \
 					-src_range_mode $srcip_type  -src_step $srcip_step
-				
 			}
 			if {[info exists dstip]} {		    
 				${streamobj}ipv4H${headindex} config -dst $dstip -dst_num $dstip_count \
 					-dst_range_mode $dstip_type  -dst_step $dstip_step
+			}
+			if {[info exists srcipv6]} {
+				${streamobj}ipv6H${headindex} config -src $srcipv6 -src_num $srcipv6_count \
+					-src_range_mode $srcipv6_type  -src_step $srcipv6_step
+			}
+			if {[info exists dstipv6]} {		    
+				${streamobj}ipv6H${headindex} config -dst $dstipv6 -dst_num $dstipv6_count \
+					-dst_range_mode $dstipv6_type  -dst_step $dstipv6_step
 			}
 			if {[info exists cvlanpri]} {		    
 				${streamobj}VlanH${headindex} config -pri1 $cvlanpri -pri1_num $cvlanpri_count
@@ -2405,7 +2527,6 @@ namespace eval IxiaFH {
 				$streamobj config -frame_len_type $framelength_mode
 			}
 			if {[info exists framesize_fix]} {
-				
 				$streamobj config -frame_len_type fixed \
 				 -frame_len $framesize_fix
 			} 
@@ -2435,8 +2556,7 @@ namespace eval IxiaFH {
 			if { $headlist == "" } {
 				if {$cmd != "" } {
 				   eval $streamobj config $cmd
-				}
-			   
+				} 
 			} else {
 				set headlist [::IxiaFH::nstype $headlist]
 				puts "headlist: $headlist"
@@ -2444,7 +2564,6 @@ namespace eval IxiaFH {
 				if {$cmd != "" } {
 				   eval $streamobj config $cmd
 				}
-				
 			}	
             
             Logto -info "Succeed to config traffic: $streamobj"	

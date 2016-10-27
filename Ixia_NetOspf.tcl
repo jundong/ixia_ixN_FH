@@ -10,70 +10,51 @@
 
 class OspfSession {
     inherit RouterEmulationObject
-	public variable routeBlock
 	public variable hNetworkRange
-	public variable protocolhandle
+    
 	constructor { port { pHandle null } { hInterface null } } {
 		global errNumber
-		set routeBlock(obj) ""
 		set tag "body OspfSession::ctor [info script]"
+        Deputs "----- TAG: $tag -----"
+        
+        set handle ""
+        set rb_interface ""
+        
 		set portObj [ GetObject $port ]
-Deputs "----- TAG: $tag -----"      
+		if { [ catch {
+			set hPort   [ $portObj cget -handle ]
+		} ] } {
+			error "$errNumber(1) Port Object in DhcpHost ctor"
+		}
+        
 		#-- add ospf protocol
         if { $pHandle != "null"  } {
-            set handle $pHandle  
+            set handle $pHandle
 			set hInt_List [ ixNet getL $handle interface ]
             foreach hInt $hInt_List {
 			    set int [ixNet getA $hInt -interfaces ]
 			    set interface($int) $hInt	
 		    }
-        } else {
-			if { [ catch {
-				set hPort  [ $portObj cget -handle ]
-				} ] } {
-					error "$errNumber(1) Port Object in DhcpHost ctor"
-				}
-	Deputs "hPort:$hPort" 
-            ixNet setA $hPort/protocols/ospf -enabled True	
-			set protocolhandle "$hPort/protocols/ospf"
-            set handle [ ixNet add $hPort/protocols/ospf router ]
-            ixNet commit
-            set handle [ ixNet remapIds $handle ]
-            ixNet setM $handle \
-				-name $this	\
-				-enabled True
-			ixNet commit
-	Deputs "handle:$handle"
-			array set routeBlock [ list ]
-			#-- add router interface
-			set interface [ ixNet getL $hPort interface]
-			if { [ llength $interface ] == 0 } {
-				set interface [ ixNet add $hPort interface ]
-				ixNet add $interface ipv4
-				ixNet commit
-				set interface [ ixNet remapIds $interface ]
-				ixNet setM $interface \
-					-enabled True
-				ixNet commit
-			Deputs "port interface:$interface"
-			}
-			if { $hInterface != "null"} {
-			} else {
-				set hInterface [ lindex $interface 0 ]
-			}
-			Deputs "hInterface:$hInterface"
-			set rb_interface  [ ixNet add $handle interface ]
-			ixNet setM $rb_interface \
-				-interfaces $hInterface \
-				-connectedToDut True \
-				-enabled True
-			ixNet commit
-			set rb_interface [ ixNet remapIds $rb_interface ]
-			Deputs "rb_interface:$rb_interface"  
-		}
+        }
+        if { $hInterface != "null" } {
+            set rb_interface $hInterface
+        }
+        reborn
 	}    
-	
-	
+	method reborn {} {
+		set tag "body OspfSession::reborn [info script]"
+		Deputs "----- TAG: $tag -----"
+		
+		ixNet setM $hPort/protocols/ospf -enableDrOrBdr True
+		ixNet setM $hPort/protocols/ospfV3 -enableDrOrBdr True
+		ixNet commit
+		
+        if { $rb_interface == "" } {
+            set rb_interface [ ixNet getL $hPort interface ]
+            Deputs "rb_interface is: $rb_interface"
+        }
+		
+	}
     method config { args } {}
 	method set_route { args } {}
 	method set_topo { args } {}
@@ -87,21 +68,21 @@ Deputs "----- TAG: $tag -----"
 	method get_stats {} {}
 	method generate_interface { args } {
 		set tag "body OspfSession::generate_interface [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		foreach int $rb_interface {
+			if { [ $this isa Ospfv2Session ] } {
+                if { [ llength [ ixNet getL $int ipv4 ] ] == 0 } {
+                    continue
+                }
+			} elseif { [ $this isa Ospfv3Session ] } {
+                if { [ llength [ ixNet getL $int ipv6 ] ] == 0 } {
+                    continue
+                }
+            }  
 			set hInt [ ixNet add $handle interface ]
 			ixNet setM $hInt -interfaces $int -enabled True -connectedToDut True
-			
 			ixNet commit
 			set hInt [ ixNet remapIds $hInt ]
-			if {[ixNet getA $hPort/protocols/ospf -enabled]} {
-				ixNet setA $hInt -interfaceIpAddress [ ixNet getA $int/ipv4 -ip ]
-			} elseif {[ixNet getA $hPort/protocols/ospfV3 -enabled]} {
-				
-			} else {
-				error "network type setting error"
-			}
-			ixNet commit
 			set interface($int) $hInt	
 		}
 	}	
@@ -110,32 +91,30 @@ Deputs "----- TAG: $tag -----"
 class Ospfv2Session {
 	inherit OspfSession
 
-    constructor { port { pHandle null }  } { chain $port } {
+    constructor { port { pHandle null }  { hInterface null } } { chain $port $pHandle $hInterface } {
 		set tag "body Ospfv2Session::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
+        
+        # Enable ospfv2
+		ixNet setA $hPort/protocols/ospf -enabled True
+		ixNet commit
         
 		#-- add ospf protocol
-        if { $pHandle != "null"  } {
-            set handle $pHandle
-          
-			set hInt_List [ ixNet getL $handle interface ]
-            foreach hInt $hInt_List {
-			    set int [ixNet getA $hInt -interfaces ]
-			
-			    set interface($int) $hInt	
-		    }
-        } else {
+        if { $handle == ""  } {
             set handle [ ixNet add $hPort/protocols/ospf router ]
             ixNet setA $handle -Enabled True
             ixNet commit
             set handle [ ixNet remapIds $handle ]
+            
             ixNet setA $handle -name $this
             
             generate_interface
         }
+        set protocol ospf
     }
 	
 	method get_status {} {}
+    method config { args } {}
 	method get_stats {} {}
     method get_fh_stats {} {}
 }
@@ -143,25 +122,24 @@ Deputs "----- TAG: $tag -----"
 class Ospfv3Session {
 	inherit OspfSession
 	
-    constructor { port } { chain $port } {
+    constructor { port { pHandle null }  { hInterface null } } { chain $port $pHandle $hInterface } {
 		set tag "body Ospfv3Session::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 	    
-	    if {[ixNet getA $hPort/protocols/ospf -enabled]} {
-		    ixNet setM $hPort/protocols/ospf -enabled False
-	    }	    
-	    
-	   ixNet setM $hPort/protocols/ospfV3 -enabled True
-	   ixNet commit 
+        ixNet setM $hPort/protocols/ospfV3 -enabled True
+        ixNet commit 
 	    
 		#-- add ospf protocol
-		set handle [ ixNet add $hPort/protocols/ospfV3 router ]
-		ixNet setA $handle -Enabled True
-		ixNet commit
-		set handle [ ixNet remapIds $handle ]
-		ixNet setA $handle -name $this
-		
-		generate_interface
+        if { $handle == ""  } {
+            set handle [ ixNet add $hPort/protocols/ospfV3 router ]
+            ixNet setA $handle -Enabled True
+            ixNet commit
+            set handle [ ixNet remapIds $handle ]
+            ixNet setA $handle -name $this
+            
+            generate_interface
+        }
+        set protocol ospfV3
     }
 
 	method config { agrs } {}
@@ -176,7 +154,7 @@ class SimulatedSummaryRoute {
 		global errNumber
 	    
 		set tag "body SimulatedSummaryRoute::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 
 		set routerObj [ GetObject $router ]
 		if { [ catch {
@@ -206,7 +184,7 @@ class SimulatedInterAreaRoute {
 		global errNumber
 	    
 		set tag "body SimulatedSummaryRoute::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 
 		set routerObj [ GetObject $router ]
 		if { [ catch {
@@ -237,7 +215,7 @@ class SimulatedLink {
 		global errNumber
 	    
 		set tag "body SimulatedSummaryRoute::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 
 		set routerObj [ GetObject $router ]
 		if { [ catch {
@@ -267,7 +245,7 @@ class SimulatedRouter {
 		global errNumber
 	    
 		set tag "body SimulatedSummaryRoute::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 
 		set routerObj [ GetObject $router ]
 		if { [ catch {
@@ -275,7 +253,7 @@ Deputs "----- TAG: $tag -----"
 		} ] } {
 			error "$errNumber(1) Router Object in SimulatedSummaryRoute ctor"
 		}
-Deputs "hRouter is: $hRouter"
+        Deputs "hRouter is: $hRouter"
 		set hUserlsagroup [ixNet add $hRouter userLsaGroup]
 		ixNet commit
 		
@@ -302,7 +280,7 @@ class SimulatedNssaRoute {
 		global errNumber
 	    
 		set tag "body SimulatedSummaryRoute::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 
 		set routerObj [ GetObject $router ]
 		if { [ catch {
@@ -330,7 +308,7 @@ class SimulatedExternalRoute {
 		global errNumber
 	    
 		set tag "body SimulatedSummaryRoute::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 
 		set routerObj [ GetObject $router ]
 		if { [ catch {
@@ -358,7 +336,7 @@ class SimulatedLinkRoute {
 		global errNumber
 	    
 		set tag "body SimulatedSummaryRoute::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 
 		set routerObj [ GetObject $router ]
 		if { [ catch {
@@ -386,7 +364,7 @@ class SimulatedIntraAreaRoute {
 		global errNumber
 	    
 		set tag "body SimulatedSummaryRoute::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 
 		set routerObj [ GetObject $router ]
 		if { [ catch {
@@ -408,7 +386,6 @@ Deputs "----- TAG: $tag -----"
 }
 
 body OspfSession::config { args } {
-	
     global errorInfo
     global errNumber
 	set area_id "0.0.0.0"
@@ -417,20 +394,18 @@ body OspfSession::config { args } {
 	set network_type "broadcast"
 	set options "v6bit | rbit | ebit"
 	set router_dead_interval 40
-	
-	set ipv6_addr 3ffe:3210::2
-	set ipv6_prefix_len 64
-	set ipv6_gw 3ffe:3210::1
 	set intf_num 1
 	set active 0
 	
     set tag "body OspfSession::config [info script]"
-Deputs "----- TAG: $tag -----"
-	
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+        
+    #param collection
+    Deputs "Args:$args "
+    puts "-----------------------$args"
     foreach { key value } $args {
         set key [string tolower $key]
+        puts "============$key, $value"
         switch -exact -- $key {
 			-ospf_id -
             -router_id {
@@ -444,6 +419,9 @@ Deputs "Args:$args "
 			}
 			-if_cost {
 				set if_cost $value
+			}
+			-instance_id {
+				set instance_id $value
 			}
 			-network_type {
 				set value [string toupper $value]
@@ -466,9 +444,6 @@ Deputs "Args:$args "
 			-priority {
 				set priority $value
 			}
-		   -ipv6_addr {
-				 set ipv6_addr $value
-			 }
 			-graceful_restart {
 				set graceful_restart $value
 			}
@@ -501,36 +476,27 @@ Deputs "Args:$args "
 		ixNet commit
 	}	
 	if { [ info exists area_id ] } {
-		# if {[ixNet getA $hPort/protocols/ospf -enabled]} {
-			# set attri "-areaId"
-		# } elseif {[ixNet getA $hPort/protocols/ospfV3 -enabled]} {
-			# set attri "-area"
-		# } else {
-			# error "area id setting error"
-		# }
 		set id_hex [IP2Hex $area_id]			
 		set area_id [format %i 0x$id_hex]
-		puts "interface:$interface"
-		set interface [ixNet getL $handle interface]
-		ixNet setA $interface -areaId $area_id
+        
+		set intf [ixNet getL $handle interface]
+		ixNet setA $intf -areaId $area_id
 		#ixNet setA $interface -area $area_id
 		ixNet commit
 	}
 	if { [ info exists hello_interval ] } {
-		set interface [ixNet getL $handle interface]
-		ixNet setA $interface -helloInterval $hello_interval	
+		set intf [ixNet getL $handle interface]
+		ixNet setA $intf -helloInterval $hello_interval	
 		ixNet commit
 	}
-	if { [ info exists if_cost ] } {
-		# if {[ixNet getA $hPort/protocols/ospf -enabled]} {
-			# set attri "-metric"
-		# } elseif {[ixNet getA $hPort/protocols/ospfV3 -enabled]} {
-			# set attri "-linkMetric"
-		# } else {
-			# error "metric setting error"
-		# }		
-		set interface [ixNet getL $handle interface]
-		ixNet setA $interface -metric $if_cost
+	if { [ info exists instance_id ] } {
+		set intf [ixNet getL $handle interface]
+		ixNet setA $intf -instanceId $instance_id
+		ixNet commit
+	}
+	if { [ info exists if_cost ] } {	
+		set intf [ixNet getL $handle interface]
+		ixNet setA $intf -metric $if_cost
 		#ixNet setA $interface -linkMetric $if_cost
 		ixNet commit
 	}
@@ -538,9 +504,7 @@ Deputs "Args:$args "
 	# v3 -interfaceType pointToPoint, -interfaceType broadcast
 	# v2 -networkType pointToPoint, -networkType broadcast, -networkType pointToMultipoint
 	if { [ info exists network_type ] } {
-	
 		switch $network_type {
-		
 			NATIVE {
 				set network_type pointToMultipoint
 			}
@@ -551,17 +515,9 @@ Deputs "Args:$args "
 				set network_type pointToPoint
 			}
 		}
-		# if {[ixNet getA $hPort/protocols/ospf -enabled]} {
-			# set attri "-networkType"
-		# } elseif {[ixNet getA $hPort/protocols/ospfV3 -enabled]} {
-			# set attri "-interfaceType"
-		# } else {
-			# error "network type setting error"
-		# }
 		puts "networktype:$network_type"
-		set interface [ixNet getL $handle interface]
-		ixNet setA $interface -networkType $network_type
-		#ixNet setA $interface -interfaceType $network_type
+		set intf [ixNet getL $handle interface]
+		ixNet setA $intf -networkType $network_type
 		ixNet commit
 	}
 	
@@ -569,7 +525,6 @@ Deputs "Args:$args "
 	# v2 -options
 	if { [ info exists options ] } { 
 		set options [split $options |]
-			 
 		if {[string match *dcbit* $options]} {
 		set dcbit 1
 		} else {
@@ -602,41 +557,41 @@ Deputs "Args:$args "
 		}
 		set opt_val "00$dcbit$rbit$nbit$mcbit$ebit$v6bit"
 		set opt_val [BinToDec $opt_val]
-#		 set opt_val [Int2Hex $opt_val]	
-		set interface [ixNet getL $handle interface]
-		ixNet setA $interface -routerOptions $opt_val
+        #set opt_val [Int2Hex $opt_val]	
+		set intf [ixNet getL $handle interface]
+		ixNet setA $intf -routerOptions $opt_val
 		ixNet commit
 	}
 	
 	if { [ info exists dead_interval ] } {
-		set interface [ixNet getL $handle interface]
-		puts "interface:$interface"
-		ixNet setA $interface -deadInterval $dead_interval
+		set intf [ixNet getL $handle interface]
+		puts "interface:$intf"
+		ixNet setA $intf -deadInterval $dead_interval
 		ixNet commit
 	}
 	
 	# v3 
 	# v2 -lsaRetransmitTime
 	if { [ info exists retransmit_interval ] } {
-		set interface [ixNet getL $handle interface]
-		puts "interface:$interface"
-		ixNet setA $interface -lsaRetransmitTime $retransmit_interval
+		set intf [ixNet getL $handle interface]
+		puts "interface:$intf"
+		ixNet setA $intf -lsaRetransmitTime $retransmit_interval
 		ixNet commit
 	}
 	if { [ info exists priority ] } {
-		set interface [ixNet getL $handle interface]
-		puts "interface:$interface"
-		ixNet setA $interface -priority $priority
+		set intf [ixNet getL $handle interface]
+		puts "interface:$intf"
+		ixNet setA $intf -priority $priority
 		ixNet commit
 	}
 	if { [ info exists authentication ] } {
-		set interface [ixNet getL $handle interface]
+		set intf [ixNet getL $handle interface]
 		if { $authentication == "md5" } {
-			ixNet setM $interface -authenticationMethods md5 
+			ixNet setM $intf -authenticationMethods md5 
 				-md5AuthenticationKeyId $md5_keyid
         }
 		if { $authentication == "simple" } {
-			ixNet setM $interface -authenticationMethods password \
+			ixNet setM $intf -authenticationMethods password \
 				-authenticationPassword $password
         }
 	}
@@ -667,8 +622,8 @@ Deputs "Args:$args "
 				set opt 0
 			}
 		}
-		set interface [ixNet getL $handle interface]
-		ixNet setA $interface -options $opt
+		set intf [ixNet getL $handle interface]
+		ixNet setA $intf -options $opt
 		ixNet commit
 	}
 	if { [ info exists active ] } {
@@ -680,17 +635,15 @@ Deputs "Args:$args "
 	}
 	ixNet commit
     return [GetStandardReturnHeader]
-	
 }
 body OspfSession::set_route { args } {
-
     global errorInfo
     global errNumber
     set tag "body OspfSession::set_route [info script]"
-Deputs "----- TAG: $tag -----"
-
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -704,7 +657,6 @@ Deputs "Args:$args "
     }
 	
 	if { [ info exists route_block ] } {
-	
 		foreach rb $route_block {
 			set num 		[ $rb cget -num ]
 			set step 		[ $rb cget -step ]
@@ -723,8 +675,8 @@ Deputs "Args:$args "
 			    set hRouteBlock $routeBlock($rb,handle)
 				$rb setHandle $hRouteBlock
 			}			
-		puts "hRouteBlock: $hRouteBlock"	
-		puts "$num; $start; $prefix_len; $step"
+            puts "hRouteBlock: $hRouteBlock"	
+            puts "$num; $start; $prefix_len; $step"
 			ixNet setM $hRouteBlock \
 				-numberOfRoutes $num \
 				-origin $origin \
@@ -737,17 +689,15 @@ Deputs "Args:$args "
 	}
 	
     return [GetStandardReturnHeader]
-	
-
 }
 body SimulatedSummaryRoute::config { args } {
     global errorInfo
     global errNumber
     set tag "body SimulatedSummaryRoute::config [info script]"
-Deputs "----- TAG: $tag -----"
-
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -809,10 +759,9 @@ Deputs "Args:$args "
 body OspfSession::advertise_topo {} {
 
 	set tag "body OspfSession::advertise_topo [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 	foreach route [ ixNet getL $handle routeRange ] {
-	
 		ixNet setA $route -enabled True
 	}
 	ixNet setA $hNetworkRange -enabled True
@@ -1358,6 +1307,232 @@ Deputs "ret:$ret"
 	
 }
 
+body Ospfv2Session::config { args } {
+	global errorInfo
+	global errNumber
+	
+	set ipv4_prefix_len 24
+	set ipv4_gw 192.85.1.1
+	set loopback_ipv4_gw 192.85.1.1
+	set ipv4_addr_step	0.0.0.1
+	set outer_vlan_step	1
+	set inner_vlan_step	1
+	set outer_vlan_num 1
+	set inner_vlan_num 1
+	set outer_vlan_priority 0
+	set inner_vlan_priority 0
+	set count 		1
+	set enabled 		True
+	
+	set tag "body Ospfv2Session::config [info script]"
+    Deputs "----- TAG: $tag -----"
+            
+    Deputs "Args:$args "
+	foreach { key value } $args {
+		set key [string tolower $key]
+		switch -exact -- $key {
+			-ipv4_addr {
+				set ipv4_addr $value
+			}
+            -ipv4_mask -
+			-ipv4_prefix_len {
+				if { [ string is integer $value ] && $value <= 32 } {
+					set ipv4_prefix_len $value					
+				} else {
+					error "$errNumber(1) key:$key value:$value"					
+				}				
+			}
+			-ipv4_gw {
+				set ipv4_gw $value
+			}
+			-outer_vlan_id {
+				if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
+					set outer_vlan_id $value
+					set flagOuterVlan   1					
+				} else {
+					error "$errNumber(1) key:$key value:$value"					
+				}
+			}
+			-outer_vlan_step {
+				if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
+					set outer_vlan_step $value
+					set flagOuterVlan   1					
+				} else {
+					error "$errNumber(1) key:$key value:$value"					
+				}				
+			}
+			-outer_vlan_num {
+				if { [ string is integer $value ] && ( $value >= 0 ) } {
+					set outer_vlan_num $value
+					set flagOuterVlan   1					
+				} else {
+					error "$errNumber(1) key:$key value:$value"					
+				}				
+			}
+			-outer_vlan_priority {
+				if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
+					set outer_vlan_priority $value
+					set flagOuterVlan   1					
+				} else {
+					error "$errNumber(1) key:$key value:$value"					
+				}				
+			}
+			-inner_vlan_id {
+				if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
+					set inner_vlan_id $value
+					set flagInnerVlan   1					
+				} else {
+					error "$errNumber(1) key:$key value:$value"					
+				}				
+			}
+			-inner_vlan_step {
+				if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
+					set inner_vlan_step $value
+					set flagInnerVlan   1					
+				} else {
+					error "$errNumber(1) key:$key value:$value"					
+				}				
+			}
+			-inner_vlan_num {
+				if { [ string is integer $value ] && ( $value >= 0 ) } {
+					set inner_vlan_num $value
+					set flagInnerVlan   1					
+				} else {
+					error "$errNumber(1) key:$key value:$value"					
+				}				
+			}
+			-inner_vlan_priority {
+				if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
+					set inner_vlan_priority $value
+					set flagInnerVlan   1					
+				} else {
+					error "$errNumber(1) key:$key value:$value"					
+				}				
+			}
+			-outer_vlan_cfi {
+				set outer_vlan_cfi $value				
+			}
+			-inner_vlan_cfi {
+				set inner_vlan_cfi $value				
+			}
+			-loopback_ipv4_addr {
+				set loopback_ipv4_addr $value
+			}
+			-loopback_ipv4_gw {
+				set loopback_ipv4_gw $value
+			}
+		}
+	}
+	if { $handle == "" } {
+		reborn
+	}
+	if { [ info exists ipv4_addr ] } {
+		foreach rb $rb_interface {
+			if { [ ixNet getA $rb -type ] == "routed" } {
+				continue
+			}
+			ixNet setM $rb/ipv4 \
+				-ip $ipv4_addr \
+				-gateway $ipv4_gw \
+				-maskWidth $ipv4_prefix_len
+			ixNet commit
+		}
+ 		generate_interface	
+	}	
+	
+	if {[ info exists outer_vlan_id ]} {
+		foreach int $rb_interface {
+			for { set index 0 } { $index < $count } { incr index } {
+				Deputs "int:$int"	
+				if { [ info exists outer_vlan_id ] } {
+					set vlanId $outer_vlan_id
+				ixNet setM $int/vlan \
+					-count 1 \
+					-vlanEnable True \
+					-vlanId $vlanId \
+					-vlanPriority   $outer_vlan_priority
+				ixNet commit
+				incr outer_vlan_id $outer_vlan_step
+					
+				}
+				if { [ info exists inner_vlan_id ] } {
+					set vlanId $inner_vlan_id
+					set innerPri $inner_vlan_priority
+					set vlanId1	[ ixNet getA $int/vlan -vlanId ]					
+					set vlanId	"${vlanId1},${vlanId}"
+					
+					set outerPri [ ixNet getA $int/vlan -vlanPriority]
+					set Pri "${outerPri},${innerPri}"
+					ixNet setM $int/vlan \
+								-count 2 \
+								-vlanEnable True \
+								-vlanId $vlanId \
+					               -vlanPriority $Pri
+					ixNet commit
+					incr inner_vlan_id $inner_vlan_step
+					
+				}
+				#if { [ info exists outer_vlan_priority ] } {
+				#	set vlanId $outer_vlan_priority
+				#ixNet setM $int/vlan \
+				#	-count 1 \
+				#     -vlanEnable True \
+				#	-vlanId $vlanId
+				#	ixNet commit
+				#	incr outer_vlan_id $outer_vlan_step					
+				#}
+				#
+				#if { [ info exists inner_vlan_id ] } {
+				#	set vlanId $inner_vlan_id
+				#	set vlanId1	[ ixNet getA $int/vlan -vlanId ]
+				#	set vlanId	"${vlanId1},${vlanId}"
+				#	ixNet setM $int/vlan \
+				#	-count 2 \
+				#	-vlanEnable True \
+				#	-vlanId $vlanId
+				#	ixNet commit
+				#	incr inner_vlan_id $inner_vlan_step
+				#	
+				#}
+				if { [ info exists enabled ] } {
+					ixNet setA $int -enabled $enabled
+					ixNet commit			
+				}
+			}
+		}
+	}
+	
+	if { [ info exists loopback_ipv4_addr ] } {
+		catch { Host $this.loopback $portObj }
+		$this.loopback config \
+			-ipv4_addr $loopback_ipv4_addr \
+			-unconnected 1 \
+			-ipv4_prefix_len 32 \
+			-ipv4_gw $loopback_ipv4_gw
+		set loopbackInt [ $this.loopback cget -handle ] 
+        Deputs "loopback int:$loopbackInt"
+		set viaInt [ lindex $rb_interface end ]
+        Deputs "via interface:$viaInt"
+		ixNet setA $loopbackInt/unconnected \
+			-connectedVia $viaInt
+		ixNet commit
+		set hInt [ ixNet add $handle interface ]
+		ixNet setM $hInt \
+			-interfaceIpAddress $loopback_ipv4_addr \
+			-interfaceIpMaskAddress 255.255.255.255 \
+			-enabled True \
+			-connectedToDut False \
+			-linkTypes stub
+		
+		ixNet commit
+		set interface($loopbackInt) $hInt	
+	}
+	
+	ixNet commit
+	eval chain $args
+	return [GetStandardReturnHeader]
+}
+
 body OspfSession::set_topo {args} {
 	
 	set tag "body OspfSession::set_topo [info script]"
@@ -1836,10 +2011,8 @@ body Ospfv3Session::config { args } {
 	global errorInfo
 	global errNumber
 	
-	set ipv6_addr 3ffe:3210::2
 	set ipv6_prefix_len 64
 	set ipv6_gw 3ffe:3210::1
-	
 	set ipv6_addr_step	::1
 	set outer_vlan_step	1
 	set inner_vlan_step	1
@@ -1852,9 +2025,9 @@ body Ospfv3Session::config { args } {
 	set enabled 		True
 	
 	set tag "body Ospfv3Session::config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 	
-Deputs "Args:$args "
+    Deputs "Args:$args "
 	foreach { key value } $args {
 		set key [string tolower $key]
 		switch -exact -- $key {
@@ -1953,6 +2126,7 @@ Deputs "Args:$args "
 			ixNet setA $ipv6Int -ip $ipv6_addr 
 			ixNet setA $ipv6Int -prefixLength $ipv6_prefix_len
 			ixNet setA $ipv6Int -gateway $ipv6_gw
+            ixNet commit
 		}
 		ixNet commit
 	}	
@@ -1989,28 +2163,28 @@ Deputs "Args:$args "
 					incr inner_vlan_id $inner_vlan_step
 					
 				}
-#				if { [ info exists outer_vlan_priority ] } {
-#					set vlanId $outer_vlan_priority
-#				ixNet setM $int/vlan \
-#					-count 1 \
-#				     -vlanEnable True \
-#					-vlanId $vlanId
-#					ixNet commit
-#					incr outer_vlan_id $outer_vlan_step					
-#				}
-#				
-#				if { [ info exists inner_vlan_id ] } {
-#					set vlanId $inner_vlan_id
-#					set vlanId1	[ ixNet getA $int/vlan -vlanId ]
-#					set vlanId	"${vlanId1},${vlanId}"
-#					ixNet setM $int/vlan \
-#					-count 2 \
-#					-vlanEnable True \
-#					-vlanId $vlanId
-#					ixNet commit
-#					incr inner_vlan_id $inner_vlan_step
-#					
-#				}
+				#if { [ info exists outer_vlan_priority ] } {
+				#	set vlanId $outer_vlan_priority
+				#ixNet setM $int/vlan \
+				#	-count 1 \
+				#     -vlanEnable True \
+				#	-vlanId $vlanId
+				#	ixNet commit
+				#	incr outer_vlan_id $outer_vlan_step					
+				#}
+				#
+				#if { [ info exists inner_vlan_id ] } {
+				#	set vlanId $inner_vlan_id
+				#	set vlanId1	[ ixNet getA $int/vlan -vlanId ]
+				#	set vlanId	"${vlanId1},${vlanId}"
+				#	ixNet setM $int/vlan \
+				#	-count 2 \
+				#	-vlanEnable True \
+				#	-vlanId $vlanId
+				#	ixNet commit
+				#	incr inner_vlan_id $inner_vlan_step
+				#	
+				#}
 				if { [ info exists enabled ] } {
 					ixNet setA $int -enabled $enabled
 					ixNet commit			
@@ -2023,6 +2197,7 @@ Deputs "Args:$args "
 	}
 	
 	ixNet commit
+    eval chain $args
 	return [GetStandardReturnHeader]
 	
 }
