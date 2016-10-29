@@ -19,6 +19,7 @@ class OspfSession {
         
         set handle ""
         set rb_interface ""
+        set routeBlock(obj) [ list ]
         
 		set portObj [ GetObject $port ]
 		if { [ catch {
@@ -402,10 +403,8 @@ body OspfSession::config { args } {
         
     #param collection
     Deputs "Args:$args "
-    puts "-----------------------$args"
     foreach { key value } $args {
         set key [string tolower $key]
-        puts "============$key, $value"
         switch -exact -- $key {
 			-ospf_id -
             -router_id {
@@ -650,6 +649,7 @@ body OspfSession::set_route { args } {
             -route_block {
             	set route_block $value
             }
+            -type -
 			-origin {
 				set origin $value
 			}
@@ -679,11 +679,12 @@ body OspfSession::set_route { args } {
             puts "$num; $start; $prefix_len; $step"
 			ixNet setM $hRouteBlock \
 				-numberOfRoutes $num \
-				-origin $origin \
+				-type $origin \
 				-networkNumber $start \
 				-mask $prefix_len \
 				-enabled $active \
-				-metric $metric_lsa
+				-metric $metric_lsa \
+                -firstRoute $start
 			ixNet commit
 		}
 	}

@@ -1430,7 +1430,7 @@ namespace eval IxiaFH {
 					set UpDevice [ lindex [split $name "."] 1 ]
 					set UpDevice [ ::IxiaFH::nstype $UpDevice   ]
 					puts "UpDevice:$UpDevice"
-				    SimulatedRouter $lastName 
+				    RouteBlock $lastName 
 					$lastName SetUpDevice $UpDevice
 					$lastName config -active 1 -start_ip 2000::1 -prefix_len 64 -metric_lsa 1
 					set origin externalType1
@@ -1674,7 +1674,7 @@ namespace eval IxiaFH {
 						eval $dname config $args_value_pairs
 						set UpDevice [ $dname cget -up_device ]
 						puts "UpDevice:$UpDevice"
-						set origin externalType1
+						set origin asExternal1
 						#set origin externalType2
 						$UpDevice set_route -route_block $dname -origin $origin
 					}
@@ -1682,7 +1682,6 @@ namespace eval IxiaFH {
 					device.ospfv3 {						
 						eval $dname config $args_value_pairs
 					}
-					interarea_prefixlsa -
 					device.ospfv3.interarea_prefixlsa {
 						eval $dname config $args_value_pairs
 						set UpDevice [ $dname cget -up_device ]
@@ -1694,7 +1693,7 @@ namespace eval IxiaFH {
 						eval $dname config $args_value_pairs
 						set UpDevice [ $dname cget -up_device ]
 						puts "UpDevice:$UpDevice"
-						set origin externalType1
+						set origin asExternal1
 						#set origin externalType2
 						$UpDevice set_route -route_block $dname -origin $origin
 					}

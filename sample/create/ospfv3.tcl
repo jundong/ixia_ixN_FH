@@ -19,11 +19,23 @@ IxDebugOff
 ::IxiaFH::device_create -name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -ipv6_address 2000::2 -ipv6_gateway 2000::20 -src_mac 00:10:94:00:00:01 }
 ::IxiaFH::device_create -name i1p2_demk -port i1_d2_1 -obj_type device -args_value { -ipv6_address 2000::20 -ipv6_gateway 2000::2 -src_mac 00:10:94:00:00:02 }
 
-::IxiaFH::device_create -name i1p1_ka.ospfv1 -port i1_d1_1 -obj_type device.ospfv3 -instance_id 100
-::IxiaFH::device_create -name i1p2_demk.ospf2 -port i1_d2_1 -obj_type device.ospfv3 -instance_id 110
+::IxiaFH::device_create -name i1p1_ka.ospfv1 -port i1_d1_1 -obj_type device.ospfv3 -args_value { -instance_id 100 }
+::IxiaFH::device_create -name i1p2_demk.ospfv2 -port i1_d2_1 -obj_type device.ospfv3 -args_value { -instance_id 110 }
+
+::IxiaFH::device_create -name i1p1_ka.ospfv1.externalsa1 -port i1_d1_1 -obj_type device.ospfv3.externalsa -args_value { -active true -start_address 8000::2 -route_count 88 -prefix_len 88 -metric_lsa 88 }
+::IxiaFH::device_create -name i1p2_demk.ospfv2.externalsa2 -port i1_d2_1 -obj_type device.ospfv3.externalsa -args_value { -active true -start_address 9000::2 -route_count 99 -prefix_len 99 -metric_lsa 99 }
+
+::IxiaFH::device_create -name i1p1_ka.ospfv1.interarea_prefixlsa1 -port i1_d1_1 -obj_type device.ospfv3.interarea_prefixlsa -args_value { -active true -start_address 7000::2 -route_count 11 -prefix_len 11 -metric_lsa 11 }
+::IxiaFH::device_create -name i1p2_demk.ospfv2.interarea_prefixlsa2 -port i1_d2_1 -obj_type device.ospfv3.interarea_prefixlsa -args_value { -active true -start_address 6.2.2.2 -route_count 22 -prefix_len 22 -metric_lsa 22 }
 
 ::IxiaFH::device_config -name i1p1_ka.ospfv1 -port i1_d1_1 -obj_type device.ospfv3 -args_value { -router_id 100.100.100.100 }
-::IxiaFH::device_config -name i1p2_demk.ospf2 -port i1_d2_1 -obj_type device.ospfv3 -args_value { -router_id 110.100.100.100 }
+::IxiaFH::device_config -name i1p2_demk.ospfv2 -port i1_d2_1 -obj_type device.ospfv3 -args_value { -router_id 110.100.100.100 }
+
+::IxiaFH::device_config -name i1p1_ka.ospfv1.externalsa1 -port i1_d1_1 -obj_type device.ospfv3.externalsa -args_value { -active true -start_address 5000::2 -route_count 88 -prefix_len 8 -metric_lsa 88 }
+::IxiaFH::device_config -name i1p2_demk.ospfv2.externalsa2 -port i1_d2_1 -obj_type device.ospfv3.externalsa -args_value { -active true -start_address 4000::2 -route_count 99 -prefix_len 99 -metric_lsa 99 }
+
+::IxiaFH::device_config -name i1p1_ka.ospfv1.interarea_prefixlsa1 -port i1_d1_1 -obj_type device.ospfv3.interarea_prefixlsa -args_value { -active true -start_address 4400::2 -route_count 11 -prefix_len 11 -metric_lsa 11 }
+::IxiaFH::device_config -name i1p2_demk.ospfv2.interarea_prefixlsa2 -port i1_d2_1 -obj_type device.ospfv3.interarea_prefixlsa -args_value { -active true -start_address 5500::2 -route_count 22 -prefix_len 22 -metric_lsa 22 }
 
 #::IxiaFH::traffic_create -name i1p1_s -port i1_d1_1 \
 #                -srcbinding i1p1_ka \
