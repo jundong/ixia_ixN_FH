@@ -9,7 +9,11 @@
 
 class IsisSession {
     inherit RouterEmulationObject
-	public variable routeBlock	
+	public variable mac_addr
+	public variable isis_password
+	public variable area_password
+	public variable domain_password
+	
     constructor { port { pHandle null } {hInterface null } } {}
     method reborn { {hInterface null} } {}
 	method set_route { args } {}
@@ -17,32 +21,30 @@ class IsisSession {
     method get_fh_stats {} {}
 	method advertise_route { args } {}
 	method withdraw_route { args } {}
-	public variable mac_addr
-	public variable protocolhandle
 }
 body IsisSession::constructor { port { pHandle null } {hInterface null} } {
     set tag "body IsisSession::constructor [info script]"
     Deputs "----- TAG: $tag -----"
 	
     global errNumber
-    set routeBlock(obj) ""
+	set isis_password "fiberhome"
+	set area_password $isis_password
+	set domain_password $isis_password
+
+    set routeBlock(obj) [list]
     #-- enable protocol
     set portObj [ GetObject $port ]
-Deputs "port:$portObj"
-   # if { [ catch {
-   #    set hPort   [ $portObj cget -handle ]
-    #Deputs "port handle: $hPort"
-    #} ] } {
-	 #   error "$errNumber(1) Port Object in IsisSession ctor"
-    #}
-Deputs "initial port..."
+	Deputs "port:$portObj"
+	Deputs "initial port..."
     if { $pHandle != "null" } {
         set handle $pHandle
        #set rb_interface  [ ixNet getL $handle interface ]
     } else {
 	    reborn $hInterface
     }
-Deputs "Step10"
+	set protocolhandle "$hPort/protocols/isis"
+	Deputs "protocolhandle:$protocolhandle"
+    set protocol "isis"
 }
 body IsisSession::reborn { {hInterface null } } {
 	global errNumber
@@ -55,7 +57,6 @@ body IsisSession::reborn { {hInterface null } } {
 			error "$errNumber(1) Port Object in DhcpHost ctor"
 		}
 	Deputs "hPort:$hPort"
-	set protocolhandle "$hPort/protocols/isis"
 	ixNet setA $hPort/protocols/isis -enabled True
 	set handle [ ixNet add $hPort/protocols/isis router ]
 	ixNet commit
@@ -93,18 +94,11 @@ body IsisSession::reborn { {hInterface null } } {
 	#-- add vlan
 	#set vlan [ ixNet add $interface vlan ]
 	#ixNet commit
-	
-	#-- port/protocols/isis/router/interface
-  
 }
 body IsisSession::config { args } {
     set tag "body IsisSession::config [info script]"
-Deputs "----- TAG: $tag -----"
-	set active 0
-	set metric_type "NW"
-	set area_id1 "00.0001"
-	#set sys_id "64:01:00:01:00:00"
-# in case the handle was removed
+	Deputs "----- TAG: $tag -----"
+	# in case the handle was removed
     if { $handle == "" } {
 	    reborn
     }
@@ -126,8 +120,11 @@ Deputs "----- TAG: $tag -----"
 					p2mp {
 						set value pointToMultipoint
 					}
+                    broadcast {
+                        set value broadcast
+                    }
 					default {
-						set value broadcast
+						error "$errNumber(1) key:$key value:$value, valid value are: broadcast or p2p"
 					}
 				}
 				set network_type $value
@@ -164,7 +161,7 @@ Deputs "----- TAG: $tag -----"
                 if { [ IsMacAddress $value ] } {
                     set mac_addr $value
                 } else {
-Deputs "wrong mac addr: $value"
+					Deputs "wrong mac addr: $value"
                     error "$errNumber(1) key:$key value:$value"
                 }
 				
@@ -177,19 +174,15 @@ Deputs "wrong mac addr: $value"
 			}
 			-area_id1 {
 				set area_id1 $value
-                set area_id1 [ string replace $area_id1 2 2 "" ]
-				set areaList [ list ]
-				lappend areaList $area_id1
-				puts "areaList $areaList"
 			}
 			-area_id2 {
 				set area_id2 $value
-				set area_id2 [ string replace $area_id2 2 2 "" ]
-				lappend areaList $area_id2
-				puts "areaList $areaList"
 			}
 			-metric_type {
 				set metric_type $value
+				if { $metric_type != "N" && $metric_type != "NW" && $metric_type != "W"} {
+					error "$errNumber(1) key:$key value:$value"	
+				}
 			}
 			-max_lspsize {
 				set max_lspsize $value
@@ -239,8 +232,10 @@ Deputs "wrong mac addr: $value"
 		ixNet setA $handle -areaAddressList $areaList
 	}
 	if { [ info exists metric_type ] } {
-		if { $metric_type == "NW" || $metric_type == "W"} {
+		if { $metric_type == "W"} {
 			ixNet setA $handle -enableWideMetric true
+		} else {
+			ixNet setA $handle -enableWideMetric false
 		}
 	}
     if { [ info exists sys_id ] } {
@@ -258,21 +253,26 @@ Deputs "sys_id: $sys_id"
     if { [ info exists discard_lsp ] } {
     	ixNet setA $handle -enableDiscardLearnedLsps $discard_lsp
     }
+	
 	if { [ info exists level_type ] } {
 		set interface [ixNet getL $handle interface]
-		switch -exact -- $level_type {
-			-L1 {
+		switch $level_type {
+			L1 {
 				set level_type level1
 			}
-			-L2 {
+			L2 {
 				set level_type level2
 				}
-			-L12 {
+			L12 {
 				set level_type level1Level2
 			}
 		}
     	ixNet setA $interface -level $level_type
-    }
+    } else {
+		set interface [ixNet getL $handle interface]
+		set level_type [ixNet getA $interface -level]
+	} 
+	
 	if { [info exists router_pri ] } {
 		set interface [ixNet getL $handle interface]
 		if { $level_type == "level1" } {
@@ -288,11 +288,19 @@ Deputs "sys_id: $sys_id"
     }
     if { [ info exists hello_interval ] } {
 		set interface [ixNet getL $handle interface]
-	    ixNet setA $interface -level1HelloTime $hello_interval
+		if { $level_type == "L1" || $level_type == "level1" } {
+			ixNet setA $interface -level1HelloTime $hello_interval
+		} else {
+			ixNet setA $interface -level2HelloTime $hello_interval
+		}
     }
     if { [ info exists dead_interval ] } {
 		set interface [ixNet getL $handle interface]
-	    ixNet setA $interface -level1DeadTime $dead_interval
+		if { $level_type == "L1" || $level_type == "level1" } {
+			ixNet setA $interface -level1DeadTime $dead_interval
+		} else {
+			ixNet setA $interface -level2DeadTime $dead_interval
+		}
     }
     if { [ info exists vlan_id ] } {
 	    set vlan [ixNet getL $interface vlan]
@@ -371,11 +379,11 @@ body IsisSession::set_route { args } {
 
     global errorInfo
     global errNumber
-    set tag "body BgpSession::set_route [info script]"
-Deputs "----- TAG: $tag -----"
-
-#param collection
-Deputs "Args:$args "
+    set tag "body IsisSession::set_route [info script]"
+    Deputs "----- TAG: $tag -----"
+    
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -407,36 +415,34 @@ Deputs "Args:$args "
 				$rb setHandle $hRouteBlock
 			}
 			
-		puts "hRouteBlock: $hRouteBlock"	
-		puts "$num; $type; $start; $prefix_len; $step"
+			puts "hRouteBlock: $hRouteBlock"	
+			puts "$num; $type; $start; $prefix_len; $step"
 			ixNet setM $hRouteBlock \
 				-numberOfRoutes $num \
 				-firstRoute $start \
 				-routeOrigin $route_type \
 				-maskWidth $prefix_len \
 				-enabled $active \
-				-metric $metric_route
+				-metric $metric_route \
+				-type $type
 			ixNet commit
 		}
 	}
 	
     return [GetStandardReturnHeader]
-	
-
 }
 
 body IsisSession::get_fh_stats {} {
-
     set tag "body IsisSession::get_fh_stats [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 
     set root [ixNet getRoot]
 	set view {::ixNet::OBJ-/statistics/view:"ISIS Aggregated Statistics"}
     # set view  [ ixNet getF $root/statistics view -caption "Port Statistics" ]
-Deputs "view:$view"
+    Deputs "view:$view"
     set captionList             [ ixNet getA $view/page -columnCaptions ]
-Deputs "caption list:$captionList"
+    Deputs "caption list:$captionList"
 	set port_name				[ lsearch -exact $captionList {Stat Name} ]
     set session_conf            [ lsearch -exact $captionList {Sess. Configured} ]
     set session_succ            [ lsearch -exact $captionList {Sess. Up} ]
@@ -572,10 +578,10 @@ body IsisSession::advertise_route { args } {
     global errorInfo
     global errNumber
     set tag "body IsisSession::advertise_route [info script]"
-Deputs "----- TAG: $tag -----"
-
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -603,10 +609,10 @@ body IsisSession::withdraw_route { args } {
     global errorInfo
     global errNumber
     set tag "body IsisSession::config [info script]"
-Deputs "----- TAG: $tag -----"
-
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {

@@ -277,9 +277,6 @@ Deputs "caption list:$captionList"
 	}
   
 	return $fhstats
-		
-			   
-		
 }
 
 proc Tester::getAllStats {  statstype } {
@@ -336,6 +333,7 @@ proc Tester::getAllStats {  statstype } {
 	
 	#set ssflag 0
 	array set pgIndex []
+	array set pgIndex []
 	set sindex 1
 	set itemindex 1
     set fhstats ""
@@ -349,7 +347,17 @@ proc Tester::getAllStats {  statstype } {
         
             set stats [ ixNet getA $view/page -rowValues ]
 			Deputs "stats:$stats"
-            
+			
+            array set dupName []
+			foreach row $stats {
+				eval {set row} $row
+                set streamname [ lindex $row $traNameIndex ]
+				if {[info exists dupName($streamname)]} {
+					incr dupName($streamname)
+				} else {
+					set dupName($streamname) 1
+				}
+			}
             foreach row $stats {
 				eval {set row} $row
 				Deputs "row:$row"
@@ -362,9 +370,13 @@ proc Tester::getAllStats {  statstype } {
 				} else {
 					set pgIndex($streamname) 1
 				}
-                Deputs "streamname: ${streamname}_$pgIndex($streamname)"
-                set fhflag "${streamname}_$pgIndex($streamname)\."
-               
+				if {$dupName($streamname) == 1} {
+					Deputs "streamname: ${streamname}"
+					set fhflag "${streamname}\."
+				} else {
+					Deputs "streamname: ${streamname}_$pgIndex($streamname)"
+					set fhflag "${streamname}_$pgIndex($streamname)\."
+				}
                 Deputs "fhflag:$fhflag"
                 
 				set statsItem   "src_dst_pair"
@@ -593,8 +605,6 @@ proc Tester::getAllStats {  statstype } {
                    set rx_count $statsVal
                }
                     
-              
-
                set statsItem   "tx_frame_rate"
                set statsVal    [ lindex $row $txFrameRateIndex ]
 				Deputs "stats val:$statsVal"

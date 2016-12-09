@@ -564,70 +564,30 @@ body Port::config { args } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-            # -inner_vlan_id {
-                # if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
-                    # set inner_vlan_id $value
-                    # set flagInnerVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -inner_vlan_step {
-                # if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
-                    # set inner_vlan_step $value
-                    # set flagInnerVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -inner_vlan_num {
-                # if { [ string is integer $value ] && ( $value >= 0 ) } {
-                    # set inner_vlan_num $value
-                    # set flagInnerVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -inner_vlan_priority {
-                # if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
-                    # set inner_vlan_priority $value
-                    # set flagInnerVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -outer_vlan_id {
-                # if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
-                    # set outer_vlan_id $value
-                    # set flagOuterVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -outer_vlan_step {
-                # if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
-                    # set outer_vlan_step $value
-                    # set flagOuterVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -outer_vlan_num {
-                # if { [ string is integer $value ] && ( $value >= 0 ) } {
-                    # set outer_vlan_num $value
-                    # set flagOuterVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -outer_vlan_priority {
-                # if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
-                    # set outer_vlan_priority $value
-                    # set flagOuterVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
+            -inner_vlan_id {
+                if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
+                    set inner_vlan_id $value
+                    set flagInnerVlan   1
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
+            -inner_vlan_step {
+                if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
+                    set inner_vlan_step $value
+                    set flagInnerVlan   1
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
+            -inner_vlan_num {
+                if { [ string is integer $value ] && ( $value >= 0 ) } {
+                    set inner_vlan_num $value
+                    set flagInnerVlan   1
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
             -ipv6_addr {
             	set ipv6_addr $value
             }
@@ -646,7 +606,7 @@ body Port::config { args } {
                     error "$errNumber(1) key:$key value:$value"
                 }                    
             }
-		   -ipv6_prefix_len -
+            -ipv6_prefix_len -
             -ipv6_mask {
                 if { [ string is integer $value ] && $value <= 128 } {
                     set ipv6_mask $value
@@ -654,7 +614,7 @@ body Port::config { args } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-		   -ipv6_gw -
+            -ipv6_gw -
             -dut_ipv6 {
             	set dut_ipv6 $value
             }
@@ -793,22 +753,22 @@ body Port::config { args } {
         ixNet commit
     }
   
-    # Deputs "set vlan on interface"
-    # if { $flagInnerVlan } {
-		# foreach int $interface {
-			# if { [ llength [ixNet getL $int vlan] ] > 0 } {
-				# set vlan [ lindex [ixNet getL $int vlan] 0 ]
-			# } else {
-				# set vlan [ ixNet add $int vlan ]
-			# }
-			
-			# ixNet setM $vlan \
-				# -vlanId         $inner_vlan_id \
-				# -vlanEnable     true \
-				# -vlanCount      $inner_vlan_num \
-				# -vlanPriority   $inner_vlan_priority
-		# }
-    # }
+    Deputs "set vlan on interface"
+    if { $flagInnerVlan } {
+        foreach int $interface {
+            if { [ llength [ixNet getL $int vlan] ] > 0 } {
+                set vlan [ lindex [ixNet getL $int vlan] 0 ]
+            } else {
+                set vlan [ ixNet add $int vlan ]
+            }
+           
+            ixNet setM $vlan \
+                -vlanId         $inner_vlan_id \
+                -vlanEnable     true \
+                -vlanCount      $inner_vlan_num \
+                -vlanPriority   $inner_vlan_priority
+        }
+    }
     
     # if { $flagOuterVlan } {
 		# foreach int $interface {
@@ -1356,9 +1316,8 @@ Deputs "----- TAG: $tag -----"
 }
 
 body Port::get_stats { args } {
-
     set tag "body Port::get_stats [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {
@@ -1373,15 +1332,15 @@ Deputs "----- TAG: $tag -----"
 	set view {::ixNet::OBJ-/statistics/view:"Port Statistics"}
     set rxview {::ixNet::OBJ-/statistics/view:"Data Plane Port Statistics"}
     # set view  [ ixNet getF $root/statistics view -caption "Port Statistics" ]
-Deputs "view:$view"
-Deputs "rxview:$rxview"
+    Deputs "view:$view"
+    Deputs "rxview:$rxview"
     set captionList             [ ixNet getA $view/page -columnCaptions ]
 	#set rxcaptionList [ ixNet getA $rxview/page -columnCaptions ]
     if { [catch { set rxcaptionList [ ixNet getA $rxview/page -columnCaptions ] } ]  } {
 	    set rxcaptionList [list Port {Rx Frames} {Tx L1 Rate (bps)} {Rx L1 Rate (bps)} {Store-Forward Min Latency (ns)} {Store-Forward Max Latency (ns) {Store-Forward Avg Latency (ns)}}]
 	} 
-Deputs "caption list:$captionList"
-Deputs "rxcaptionList:$rxcaptionList"
+    Deputs "caption list:$captionList"
+    Deputs "rxcaptionList:$rxcaptionList"
 	set port_name				[ lsearch -exact $captionList {Stat Name} ]
     set tx_frame_count          [ lsearch -exact $captionList {Frames Tx.} ]
     set total_frame_count       [ lsearch -exact $captionList {Valid Frames Rx.} ]
@@ -1408,19 +1367,18 @@ Deputs "rxcaptionList:$rxcaptionList"
 	if { [catch { set rxstats  [ ixNet getA $rxview/page -rowValues ] } ]} {
 	    set rxstats [list $this  "0" "NA" "NA" "NA" "NA" "NA"]
 	}
-Deputs "stats:$stats"
-Deputs "rxstats:$rxstats"
+    Deputs "stats:$stats"
+    Deputs "rxstats:$rxstats"
 
     set connectionInfo [ ixNet getA $handle -connectionInfo ]
-Deputs "connectionInfo :$connectionInfo"
+    Deputs "connectionInfo :$connectionInfo"
     regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
-Deputs "chas:$chassis card:$card port$port"
+    Deputs "chas:$chassis card:$card port$port"
 
     foreach row $stats {
-        
         eval {set row} $row
-Deputs "row:$row"
-Deputs "portname:[ lindex $row $port_name ]"
+        Deputs "row:$row"
+        Deputs "portname:[ lindex $row $port_name ]"
 		if { [ string length $card ] == 1 } {
 			set card "0$card"
 		}
@@ -1433,27 +1391,26 @@ Deputs "portname:[ lindex $row $port_name ]"
 
         set statsItem   "tx_frame_count"
         set statsVal    [ lindex $row $tx_frame_count ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		if {[info exists fhflag]} {
 	       set statitem ${fhflag}TxFrameCount
 	       lappend fhlist $statitem $statsVal
-	   }
+        }
 	   
           
         set statsItem   "total_frame_count"
         set statsVal    [ lindex $row $total_frame_count ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         if {[info exists fhflag]} {
 	       set statitem ${fhflag}RxFrameCount
 	       lappend fhlist $statitem $statsVal
-	   }
+        }
          
-
     	if { $statsVal < 1 } {
 		    set statsVal [ lindex $row $rx_data_integrity ]
-Deputs "stats val:$statsVal"
+            Deputs "stats val:$statsVal"
     	}
 		if { $statsVal < 1 } {
 		    ixConnectToTclServer $chassis
@@ -1463,22 +1420,22 @@ Deputs "stats val:$statsVal"
 		    stat get statAllStats $chas $card $port
             set statsVal [ stat cget -oversize ]
 		    
-Deputs "stats val:$statsVal"
+            Deputs "stats val:$statsVal"
     	}
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
               
         set statsItem   "tx_frame_rate"
         set statsVal    [ lindex $row $tx_frame_rate ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		if {[info exists fhflag]} {
 	       set statitem ${fhflag}TxFrameRate
 	       lappend fhlist $statitem $statsVal
-	   }
+        }
 			  
         set statsItem   "rx_frame_rate"
         set statsVal    [ lindex $row $rx_frame_rate ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		if {[info exists fhflag]} {
 	       set statitem ${fhflag}RxFrameRate
@@ -1487,7 +1444,7 @@ Deputs "stats val:$statsVal"
 			  
         set statsItem   "tx_bit_rate"
         set statsVal    [ lindex $row $tx_bit_rate ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		if {[info exists fhflag]} {
 	       set statitem ${fhflag}TxL2BitRate
@@ -1496,20 +1453,17 @@ Deputs "stats val:$statsVal"
           
         set statsItem   "rx_bit_rate"
         set statsVal    [ lindex $row $rx_bit_rate ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ] 
         if {[info exists fhflag]} {
 	       set statitem ${fhflag}RxL2BitRate
 	       lappend fhlist $statitem $statsVal
 	   }		
-
     }
     
     foreach rxrow $rxstats {
-        
         eval {set rxrow} $rxrow
-Deputs "rxrow:$rxrow"
-
+        Deputs "rxrow:$rxrow"
 	
 		# if { $this != [ lindex $rxrow $rx_port ] } {
             # set rxport [ lindex $rxrow $rx_port ]
@@ -1525,10 +1479,10 @@ Deputs "rxrow:$rxrow"
 
         set statsItem   "rx_frame_count"
         set statsVal    [ lindex $rxrow $rx_frame_count ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         if { $statsVal =="" } {
 		    set statsVal "0"
-Deputs "stats val:$statsVal"
+            Deputs "stats val:$statsVal"
     	}
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		# if {[info exists fhflag]} {
@@ -1540,7 +1494,7 @@ Deputs "stats val:$statsVal"
 		if { $statsVal =="" } {
 		    set statsVal 0
     	}
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		if {[info exists fhflag]} {
 	       set statitem ${fhflag}TxL1BitRate
@@ -1548,7 +1502,7 @@ Deputs "stats val:$statsVal"
 	   }
 	    set statsItem   "rx_l1_bit_rate"
         set statsVal    [ lindex $rxrow $rx_l1_bit_rate ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         if { $statsVal =="" } {
 		    set statsVal 0
     	}
@@ -1562,29 +1516,29 @@ Deputs "stats val:$statsVal"
         if { $statsVal =="" } {
 		    set statsVal 0
     	}
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		if {[info exists fhflag]} {
 	       set statitem "${fhflag}minLatency"
 	       lappend fhlist $statitem $statsVal
-	   }
+        }
 	    set statsItem   "max_latency"
         set statsVal    [ lindex $rxrow $max_latency ]
         if { $statsVal =="" } {
 		    set statsVal 0
     	}
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		if {[info exists fhflag]} {
 	       set statitem "${fhflag}maxLatency"
 	       lappend fhlist $statitem $statsVal
-	   }
+        }
 	    set statsItem   "avg_latency"
         set statsVal    [ lindex $rxrow $avg_latency ]
         if { $statsVal =="" } {
 		    set statsVal 0
     	}
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		if {[info exists fhflag]} {
 	       set statitem "${fhflag}avgLatency"
@@ -1593,10 +1547,9 @@ Deputs "stats val:$statsVal"
     }
     
     foreach row $stats {
-        
         eval {set row} $row
-Deputs "row:$row"
-Deputs "portname:[ lindex $row $port_name ]"
+        Deputs "row:$row"
+        Deputs "portname:[ lindex $row $port_name ]"
 		if { [ string length $card ] == 1 } {
 			set card "0$card"
 		}
@@ -1609,56 +1562,54 @@ Deputs "portname:[ lindex $row $port_name ]"
               
         set statsItem   "fcs_error_frame"
         set statsVal    [ lindex $row $fcs_error_frame ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "ipv4_rrame_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "ipv6_frame_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "jumbo_frame_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "mpls_frame_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "oversize_frame_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "prbs_bit_error_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "tcp_frame_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "udp_frame_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "vlan_frame_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-Deputs "ret:$ret"
-
+        Deputs "ret:$ret"
     }
 	
 	if {[info exists fhflag]} {

@@ -20,6 +20,7 @@ class OspfSession {
         set handle ""
         set rb_interface ""
         set routeBlock(obj) [ list ]
+        set protocolhandle ""
         
 		set portObj [ GetObject $port ]
 		if { [ catch {
@@ -99,7 +100,7 @@ class Ospfv2Session {
         # Enable ospfv2
 		ixNet setA $hPort/protocols/ospf -enabled True
 		ixNet commit
-        
+        set protocolhandle $hPort/protocols/ospf
 		#-- add ospf protocol
         if { $handle == ""  } {
             set handle [ ixNet add $hPort/protocols/ospf router ]
@@ -129,7 +130,7 @@ class Ospfv3Session {
 	    
         ixNet setM $hPort/protocols/ospfV3 -enabled True
         ixNet commit 
-	    
+	    set protocolhandle $hPort/protocols/ospfV3
 		#-- add ospf protocol
         if { $handle == ""  } {
             set handle [ ixNet add $hPort/protocols/ospfV3 router ]
@@ -391,16 +392,15 @@ body OspfSession::config { args } {
     global errNumber
 	set area_id "0.0.0.0"
 	set hello_interval 10
-	set if_cost 1
-	set network_type "broadcast"
+	set network_type "broadcast" 
 	set options "v6bit | rbit | ebit"
 	set router_dead_interval 40
 	set intf_num 1
 	set active 0
-	
+                      
     set tag "body OspfSession::config [info script]"
     Deputs "----- TAG: $tag -----"
-        
+       
     #param collection
     Deputs "Args:$args "
     foreach { key value } $args {
@@ -424,6 +424,21 @@ body OspfSession::config { args } {
 			}
 			-network_type {
 				set value [string toupper $value]
+                switch $value {
+                    P2MP -
+                    NATIVE {
+                        set network_type pointToMultipoint
+                    }
+                    BROADCAST {
+                        set network_type broadcast
+                    }
+                    P2P {
+                        set network_type pointToPoint
+                    }
+                    default {
+                        error "$errNumber(1) key:$key value:$value, valid value are: broadcast or p2p"
+                    }
+                }
 				set network_type $value
 			}
 			-options {
@@ -479,7 +494,7 @@ body OspfSession::config { args } {
 		set area_id [format %i 0x$id_hex]
         
 		set intf [ixNet getL $handle interface]
-		ixNet setA $intf -areaId $area_id
+		ixNet setA $intf -area $area_id
 		#ixNet setA $interface -area $area_id
 		ixNet commit
 	}
@@ -495,25 +510,17 @@ body OspfSession::config { args } {
 	}
 	if { [ info exists if_cost ] } {	
 		set intf [ixNet getL $handle interface]
-		ixNet setA $intf -metric $if_cost
-		#ixNet setA $interface -linkMetric $if_cost
+        if { $protocol == "ospf" } {
+            ixNet setA $intf -metric $if_cost
+        } else {
+            ixNet setA $intf -linkMetric $if_cost
+        }
 		ixNet commit
 	}
 	
 	# v3 -interfaceType pointToPoint, -interfaceType broadcast
 	# v2 -networkType pointToPoint, -networkType broadcast, -networkType pointToMultipoint
 	if { [ info exists network_type ] } {
-		switch $network_type {
-			NATIVE {
-				set network_type pointToMultipoint
-			}
-			BROADCAST {
-				set network_type broadcast
-			}
-			P2P {
-				set network_type pointToPoint
-			}
-		}
 		puts "networktype:$network_type"
 		set intf [ixNet getL $handle interface]
 		ixNet setA $intf -networkType $network_type
@@ -586,43 +593,59 @@ body OspfSession::config { args } {
 	if { [ info exists authentication ] } {
 		set intf [ixNet getL $handle interface]
 		if { $authentication == "md5" } {
-			ixNet setM $intf -authenticationMethods md5 
-				-md5AuthenticationKeyId $md5_keyid
+			ixNet setA $intf -authenticationMethods md5
+            if { [ info exists md5_keyid ] } {
+                ixNet setA $intf -md5AuthenticationKeyId $md5_keyid
+            }
+            set pass [ixNet getA $intf -md5AuthenticationKey]
+            if { $pass == "" } {
+                if { [ info exists password ] } {
+                    ixNet setA $intf -md5AuthenticationKey $password
+                } else {
+                    ixNet setA $intf -md5AuthenticationKey fiberhome
+                }
+            } else {
+                if { [ info exists password ] } {
+                    ixNet setA $intf -md5AuthenticationKey $password
+                }
+            }
+            
         }
 		if { $authentication == "simple" } {
-			ixNet setM $intf -authenticationMethods password \
-				-authenticationPassword $password
+            ixNet setA $intf -authenticationMethods password
+            set pass [ixNet getA $intf -authenticationPassword]
+            if { $pass == "" } {
+                if { [ info exists password ] } {
+                    ixNet setM $intf -authenticationPassword $password
+                } else {
+                    ixNet setA $intf -authenticationPassword fiberhome
+                }
+            } else {
+                if { [ info exists password ] } {
+                    ixNet setA $intf -authenticationPassword $password
+                }
+            }
         }
 	}
 	if { [ info exists option ] } {
 		switch  $option {
-			1 {
-				set opt 1
-			}
-			2 {
-				set opt 2
-			}
-			3 {
-				set opt 3
-			}
-			4 {
-				set opt 4
-			}
-			5 {
-				set opt 5
-			}
-			6 {
-				set opt 6
-			}
-			7 {
-				set opt 7
-			}
 			8 {
-				set opt 0
+                if { $protocol == "ospf" } {
+                    set opt 0
+                } else {
+                    set opt $option
+                }
 			}
+            default {
+                set opt $option
+            }
 		}
 		set intf [ixNet getL $handle interface]
-		ixNet setA $intf -options $opt
+        if { $protocol == "ospf" } {
+            ixNet setA $intf -options $opt
+        } else {
+            ixNet setA $intf -routerOptions $opt
+        }
 		ixNet commit
 	}
 	if { [ info exists active ] } {

@@ -299,8 +299,6 @@ class EtherHdr {
 		set saStep 1
 		set daNum  1
 		set saNum  1
-		#set sa [ RandomMacAddr ]
-		#set da [ RandomMacAddr ]
 	}
     
 	public variable daoffset
@@ -309,8 +307,6 @@ class EtherHdr {
 	public variable saStep
 	public variable daNum
 	public variable saNum
-	#public variable sa
-	#public variable da
 	
     method config { args } {}
 }
@@ -319,7 +315,6 @@ class CustomHdr {
     constructor {} { chain custom } {}
     
     method config { args } {}
-
 }
 class SingleVlanHdr {
     inherit Header
@@ -808,134 +803,132 @@ body Traffic::config { args  } {
             ixNet setA $dstIpField -singleValue $dst
             ixNet commit            
 	   } else {
-        #Deputs "objects:[find objects]"
-		set srcHandle [ list ]
-		foreach srcEndpoint $src {
-            Deputs "src:$srcEndpoint"
-			set srcObj [ GetObject $srcEndpoint ]
-            Deputs "srcObj:$srcObj"			
-			if { $srcObj == "" } {
-                Deputs "illegal object...$srcObj"
-				set srcObj $portObj
-                # error "$errNumber(1) key:src value:$src (Not an object)"                
-			}
-			if { ( [ $srcObj isa Port ] == 0 ) && ( [ $srcObj isa EmulationObject ] == 0 ) && ( [ $srcObj isa Host ] == 0 ) } {
-                Deputs "illegal object...$src"
-                error "$errNumber(1) key:src value:$src (Not a port or emulation object)"                
-			}
-			if { [ $srcObj isa Port ] } {
-                Deputs Step110
-				set srcHandle [ concat $srcHandle "[ $srcObj cget -handle ]/protocols" ]
-			} else {
-                Deputs Step120
-				set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
-                catch {
-                    if { [ llength [ ixNet getL $dstHandle ipv6 ] ] > 0 } {
-                        set trafficType ipv6
+            #Deputs "objects:[find objects]"
+            set srcHandle [ list ]
+            foreach srcEndpoint $src {
+                Deputs "src:$srcEndpoint"
+                set srcObj [ GetObject $srcEndpoint ]
+                Deputs "srcObj:$srcObj"			
+                if { $srcObj == "" } {
+                    Deputs "illegal object...$srcObj"
+                    set srcObj $portObj
+                    # error "$errNumber(1) key:src value:$src (Not an object)"                
+                }
+                if { ( [ $srcObj isa Port ] == 0 ) && ( [ $srcObj isa EmulationObject ] == 0 ) && ( [ $srcObj isa Host ] == 0 ) } {
+                    Deputs "illegal object...$src"
+                    error "$errNumber(1) key:src value:$src (Not a port or emulation object)"                
+                }
+                if { [ $srcObj isa Port ] } {
+                    Deputs Step110
+                    set srcHandle [ concat $srcHandle "[ $srcObj cget -handle ]/protocols" ]
+                } else {
+                    Deputs Step120
+                    set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
+                    catch {
+                        if { [ llength [ ixNet getL $dstHandle ipv6 ] ] > 0 } {
+                            set trafficType ipv6
+                        }
                     }
                 }
-			}
-		}
-        Deputs "src handle:$srcHandle"
-
-		set dstHandle [ list ]
-        Deputs "dst list:$dst"		
-		foreach dstEndpoint $dst {
-            Deputs "dst:$dstEndpoint"
-			set dstObj [ GetObject $dstEndpoint ]
-            Deputs "dstObj:$dstObj"			
-			if { $dstObj == "" } {
-                Deputs "illegal object...$dstEndpoint"
-                error "$errNumber(1) key:dst value:$dst"                
-			}
-			if { ( [ $dstObj isa Port ] == 0 ) && ( [ $dstObj isa EmulationObject ] == 0 ) && ( [ $dstObj isa Host ] == 0 ) } {
-                Deputs "illegal object...$dst"
-                error "$errNumber(1) key:dst value:$dst (Not a port or emulation object)"                
-			}
-			Deputs Step100
-			if { [ $dstObj isa Port ] } {
-                Deputs Step130
-				set dstHandle [ concat $dstHandle "[ $dstObj cget -handle ]/protocols" ]
-			} else {
-				set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
-                catch {
-                    if { [ llength [ ixNet getL $dstHandle ipv6 ] ] > 0 } {
-                        set trafficType ipv6
+            }
+            Deputs "src handle:$srcHandle"
+    
+            set dstHandle [ list ]
+            Deputs "dst list:$dst"		
+            foreach dstEndpoint $dst {
+                Deputs "dst:$dstEndpoint"
+                set dstObj [ GetObject $dstEndpoint ]
+                Deputs "dstObj:$dstObj"			
+                if { $dstObj == "" } {
+                    Deputs "illegal object...$dstEndpoint"
+                    error "$errNumber(1) key:dst value:$dst"                
+                }
+                if { ( [ $dstObj isa Port ] == 0 ) && ( [ $dstObj isa EmulationObject ] == 0 ) && ( [ $dstObj isa Host ] == 0 ) } {
+                    Deputs "illegal object...$dst"
+                    error "$errNumber(1) key:dst value:$dst (Not a port or emulation object)"                
+                }
+                Deputs Step100
+                if { [ $dstObj isa Port ] } {
+                    Deputs Step130
+                    set dstHandle [ concat $dstHandle "[ $dstObj cget -handle ]/protocols" ]
+                } else {
+                    set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
+                    catch {
+                        if { [ llength [ ixNet getL $dstHandle ipv6 ] ] > 0 } {
+                            set trafficType ipv6
+                        }
                     }
                 }
-			}
-		}
-        #-- advanced stream Ports/Emulations
-        Deputs "Traffic type: advanced stream:$trafficType"
-        #-- Create advanced stream
-        #-- create trafficItem      
-        if { $bidirection } {
-          set bi True
-        } else {
-          set bi False
-        }
-        ixNet setMultiA $handle \
-           -trafficItemType l2L3 \
-           -biDirectional $bi \
-           -routeMesh oneToOne \
-           -srcDestMesh oneToOne \
-           -trafficType $trafficType ;#can be ipv4 or ipv6 or ethernetVlan
-          if { $enable_sig } {
-              ixNet setA $handle/tracking -trackBy sourceDestPortPair0
+            }
+            #-- advanced stream Ports/Emulations
+            Deputs "Traffic type: advanced stream:$trafficType"
+            #-- Create advanced stream
+            #-- create trafficItem      
+            if { $bidirection } {
+              set bi True
+            } else {
+              set bi False
+            }
+            ixNet setMultiA $handle \
+               -trafficItemType l2L3 \
+               -biDirectional $bi \
+               -routeMesh oneToOne \
+               -srcDestMesh oneToOne \
+               -trafficType $trafficType ;#can be ipv4 or ipv6 or ethernetVlan
+              if { $enable_sig } {
+                  ixNet setA $handle/tracking -trackBy sourceDestPortPair0
+                  ixNet commit
+              }
+              Deputs "add endpointSet..."
+              #-- add endpointSet
+              set endpointSet [ixNet add $handle endpointSet]
+              
+              Deputs "src:$srcHandle"
+              ixNet setA $endpointSet -sources $srcHandle
+              
+              Deputs "dst:$dstHandle"
+              ixNet setA $endpointSet -destinations $dstHandle
+              Deputs Step170
+              Deputs "ep:$endpointSet"
               ixNet commit
-          }
-          Deputs "add endpointSet..."
-          #-- add endpointSet
-          set endpointSet [ixNet add $handle endpointSet]
-          Deputs "ep:$endpointSet"
-          ixNet commit
-          set endpointSet [ ixNet remapIds $endpointSet ]
-          
-          Deputs "src:$srcHandle"
-          ixNet setA $endpointSet -sources $srcHandle
-          
-          Deputs "dst:$dstHandle"
-          ixNet setA $endpointSet -destinations $dstHandle
-          Deputs Step170
-          ixNet commit
-          Deputs Step180
-          Deputs "handle:$handle"
-
-          #-- for every stream is not bi-direction, thus only one highlevelstream will be created
-          # set highLevelStream [ ixNet getList $handle highLevelStream ]
-          set highLevelStream [ ixNet getList $handle configElement ]
-          # foreach hStream $highLevelStream {
-          # set ethStack [lindex [ ixNet getList $hStream stack ] 0]
-          # set obj [ GetField $ethStack destinationAddress ]
-          # ixNet setMultiAttrs $obj \
-                  # -valueType singleValue \
-                  # -singleValue "00:00:94:00:00:01"
-          # set obj [ GetField $ethStack sourceAddress ]
-          # ixNet setMultiAttrs $obj \
-                  # -valueType singleValue \
-                  # -singleValue "00:00:00:00:00:01"
-		# }
-		ixNet commit
-        Deputs "highLevelStream:$highLevelStream"
-        Deputs Step190
-        # set hlHandle [lindex [ixNet getL  $handle highLevelStream] end ]
-		# Deputs "hlHandle: $hlHandle"
-        # set hlName [ixNet getA $hlHandle -name]
-		# Deputs "hlName: $hlName"
-        # set len [string length $hlName]
-        # for {set index 0 } { $index <$len} {incr index} {
-            # if {[string index $hlName $index] == " " || [string index $hlName $index] =="-"} {
-                # set hlName [string replace $hlName $index $index "_"]
+              set endpointSet [ ixNet remapIds $endpointSet ]
+              Deputs Step180
+              Deputs "handle:$handle"
+    
+              #-- for every stream is not bi-direction, thus only one highlevelstream will be created
+              # set highLevelStream [ ixNet getList $handle highLevelStream ]
+              set highLevelStream [ ixNet getList $handle configElement ]
+              # foreach hStream $highLevelStream {
+              # set ethStack [lindex [ ixNet getList $hStream stack ] 0]
+              # set obj [ GetField $ethStack destinationAddress ]
+              # ixNet setMultiAttrs $obj \
+                      # -valueType singleValue \
+                      # -singleValue "00:00:94:00:00:01"
+              # set obj [ GetField $ethStack sourceAddress ]
+              # ixNet setMultiAttrs $obj \
+                      # -valueType singleValue \
+                      # -singleValue "00:00:00:00:00:01"
             # }
-        # }
-		# Deputs "hlName: $hlName"
-        # ixNet setA $hlHandle -name $hlName
-        # ixNet commit
-		# ixNet commit
-		
-		set regenerateflag 0
-       
-	   }
+            ixNet commit
+            Deputs "highLevelStream:$highLevelStream"
+            Deputs Step190
+            # set hlHandle [lindex [ixNet getL  $handle highLevelStream] end ]
+            # Deputs "hlHandle: $hlHandle"
+            # set hlName [ixNet getA $hlHandle -name]
+            # Deputs "hlName: $hlName"
+            # set len [string length $hlName]
+            # for {set index 0 } { $index <$len} {incr index} {
+                # if {[string index $hlName $index] == " " || [string index $hlName $index] =="-"} {
+                    # set hlName [string replace $hlName $index $index "_"]
+                # }
+            # }
+            # Deputs "hlName: $hlName"
+            # ixNet setA $hlHandle -name $hlName
+            # ixNet commit
+            # ixNet commit
+            
+            set regenerateflag 0
+        }
 		set flag_modify_adv 1
 	} else {
 		# if { ( [ info exists highLevelStream ] == 0 ) || ( [ llength $highLevelStream ] == 0 ) } {
@@ -1690,6 +1683,7 @@ Deputs Step250
     return [GetStandardReturnHeader]
 
 }
+
 body Traffic::enable {} {
     set tag "body Traffic::enable [info script]"
 Deputs "----- TAG: $tag -----"
@@ -3305,7 +3299,7 @@ Deputs Step10
 			 }
 			}
 			-src {
-			Deputs "set ip address...$value"
+			Deputs "set src ip address...$value"
 				foreach addr $value {
 					if { [ IsIPv4Address $addr ] } {
 						set sa $value
@@ -3345,13 +3339,14 @@ Deputs Step10
 			 }                    
 			}
 			-dst {
-			foreach addr $value {
-				 if { [ IsIPv4Address $addr ] } {
-					set da $value
-				 } else {
-					error "$errNumber(1) key:$key value:$value"
-				 }
-			 }
+                Deputs "set dst ip address...$value"
+                foreach addr $value {
+                    if { [ IsIPv4Address $addr ] } {
+                       set da $value
+                    } else {
+                       error "$errNumber(1) key:$key value:$value"
+                    }
+                }
 			}
 			-dst_num {
 			 set trans [ UnitTrans $value ]

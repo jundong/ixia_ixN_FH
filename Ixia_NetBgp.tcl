@@ -9,13 +9,16 @@
 
 class BgpSession {
     inherit RouterEmulationObject
- 	public variable routeBlock
-    public variable protocolhandle   
+    public variable password
+    
     constructor { port { pHandle null } { hInterface null } } {
-
 		set tag "body BgpSession::ctor [info script]"
-Deputs "----- TAG: $tag -----"
-        set routeBlock(obj) ""
+        Deputs "----- TAG: $tag -----"
+        
+        set password "fiberhome"
+        set routeBlock(obj) [ list ]
+        set protocolhandle ""
+
 		set portObj [ GetObject $port ]
         if { $pHandle != "null" } {
             set handle $pHandle
@@ -23,14 +26,16 @@ Deputs "----- TAG: $tag -----"
         } else {
 		    reborn $hInterface
         }
+        
+        set protocol "bgp"
+        set protocolhandle "$hPort/protocols/bgp"
 	}
 	
-
 	method reborn { { hInterface null }} {
 		global errNumber
 		
 		set tag "body BgpSession::reborn [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 
 		if { [ catch {
 			set hPort   [ $portObj cget -handle ]
@@ -41,7 +46,6 @@ Deputs "----- TAG: $tag -----"
 		ixNet setA $hPort/protocols/bgp -enabled True
 			
 		#-- add bgp protocol
-		set protocolhandle "$hPort/protocols/bgp"
 		set handle [ ixNet add $hPort/protocols/bgp neighborRange ]
 		ixNet commit
 		set handle [ ixNet remapIds $handle ]
@@ -89,12 +93,10 @@ body BgpSession::config { args } {
     global errorInfo
     global errNumber
     set tag "body BgpSession::config [info script]"
-Deputs "----- TAG: $tag -----"
-	set hold_time_interval 10
-	set active 0
-#param collection
+    Deputs "----- TAG: $tag -----"
+    #   param collection
     
-Deputs "Args:$args "
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -148,8 +150,6 @@ Deputs "Args:$args "
 				} else {
 				   set type $value
 				}
-				
-			
 			}
 			-bgp_id {
 				set bgp_id $value
@@ -171,8 +171,8 @@ Deputs "Args:$args "
 	}
 	
 	if { [ info exists ipv4_addr ] } {
-Deputs "ipv4: [ixNet getL $interface ipv4]"	
-Deputs "interface:$interface"
+        Deputs "ipv4: [ixNet getL $interface ipv4]"	
+        Deputs "interface:$interface"
 		ixNet setA $interface/ipv4 -ip $ipv4_addr
 	}
 	if { [ info exists ipv4_gw ] } {
@@ -189,10 +189,10 @@ Deputs "interface:$interface"
 		ixNet setA $handle -type $type
 	}
     if { [ info exists afi ] } {
-Deputs "not implemented parameter: afi"
+        Deputs "not implemented parameter: afi"
     }
     if { [ info exists sub_afi ] } {
-Deputs "not implemented parameter: safi"
+        Deputs "not implemented parameter: safi"
     }
     if { [ info exists as ] } {
     	ixNet setA $handle -localAsNumber $as
@@ -211,6 +211,9 @@ Deputs "not implemented parameter: safi"
     if { [ info exists hold_time_interval ] } {
 	    ixNet setA $handle  -holdTimer $hold_time_interval
     }
+    if { [ info exists keep_time_interval ] } {
+	    ixNet setA $handle  -updateInterval $keep_time_interval
+    }
     if { [ info exists ip_version ] } {
     }
 	if { [ info exists authentication ] } {
@@ -218,7 +221,6 @@ Deputs "not implemented parameter: safi"
 		    ixNet setM $handle -authentication md5 \
 		    -md5Key $password
 		}
-	    
     }
 	if { [ info exists bgp_id ] } {
 		ixNet setA $handle -bgpId $bgp_id
@@ -240,10 +242,10 @@ body BgpSession::set_route { args } {
     global errorInfo
     global errNumber
     set tag "body BgpSession::set_route [info script]"
-Deputs "----- TAG: $tag -----"
-
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -302,10 +304,10 @@ body BgpSession::advertise_route { args } {
     global errorInfo
     global errNumber
     set tag "body BgpSession::advertise_route [info script]"
-Deputs "----- TAG: $tag -----"
-
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -333,10 +335,10 @@ body BgpSession::withdraw_route { args } {
     global errorInfo
     global errNumber
     set tag "body BgpSession::config [info script]"
-Deputs "----- TAG: $tag -----"
-
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -363,15 +365,15 @@ Deputs "Args:$args "
 body BgpSession::get_stats {} {
 
     set tag "body BgpSession::get_stats [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 
     set root [ixNet getRoot]
 	set view {::ixNet::OBJ-/statistics/view:"BGP Aggregated Statistics"}
     # set view  [ ixNet getF $root/statistics view -caption "Port Statistics" ]
-Deputs "view:$view"
+    Deputs "view:$view"
     set captionList             [ ixNet getA $view/page -columnCaptions ]
-Deputs "caption list:$captionList"
+    Deputs "caption list:$captionList"
 	set port_name				[ lsearch -exact $captionList {Stat Name} ]
     set session_conf          [ lsearch -exact $captionList {Sess. Configured} ]
     set session_succ          [ lsearch -exact $captionList {Sess. Up} ]
@@ -380,18 +382,18 @@ Deputs "caption list:$captionList"
     set ret [ GetStandardReturnHeader ]
 	
     set stats [ ixNet getA $view/page -rowValues ]
-Deputs "stats:$stats"
+    Deputs "stats:$stats"
 
     set connectionInfo [ ixNet getA $hPort -connectionInfo ]
-Deputs "connectionInfo :$connectionInfo"
+    Deputs "connectionInfo :$connectionInfo"
     regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
-Deputs "chas:$chassis card:$card port$port"
+    Deputs "chas:$chassis card:$card port$port"
 
     foreach row $stats {
         
         eval {set row} $row
-Deputs "row:$row"
-Deputs "portname:[ lindex $row $port_name ]"
+        Deputs "row:$row"
+        Deputs "portname:[ lindex $row $port_name ]"
 		if { [ string length $card ] == 1 } {
 			set card "0$card"
 		}
@@ -404,23 +406,19 @@ Deputs "portname:[ lindex $row $port_name ]"
 
         set statsItem   "session_conf"
         set statsVal    [ lindex $row $session_conf ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
           
               
         set statsItem   "session_succ"
         set statsVal    [ lindex $row $session_succ ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-			  
-
-Deputs "ret:$ret"
-
+	
+        Deputs "ret:$ret"
     }
         
     return $ret
-
-	
 }
 
 #{Stat Name} {Port Name} {Sess. Configured} {Sess. Up} {Session Flap Count} {Idle State Count} {Connect State Count} {Active State Count} 
@@ -455,25 +453,21 @@ Deputs "caption list:$captionList"
     set TxNotification          [ lsearch -exact $captionList {Notifications Tx} ]
     set RxKeepAlive             [ lsearch -exact $captionList {KeepAlives Rx} ]
     set TxKeepAlive             [ lsearch -exact $captionList {KeepAlives Tx} ]
-
-
-
-	
     set ret ""
 	
     set stats [ ixNet getA $view/page -rowValues ]
-Deputs "stats:$stats"
+    Deputs "stats:$stats"
 
     set connectionInfo [ ixNet getA $hPort -connectionInfo ]
-Deputs "connectionInfo :$connectionInfo"
+    Deputs "connectionInfo :$connectionInfo"
     regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
-Deputs "chas:$chassis card:$card port$port"
+    Deputs "chas:$chassis card:$card port$port"
 
     foreach row $stats {
         
         eval {set row} $row
-Deputs "row:$row"
-Deputs "portname:[ lindex $row $port_name ]"
+        Deputs "row:$row"
+        Deputs "portname:[ lindex $row $port_name ]"
 		if { [ string length $card ] == 1 } {
 			set card "0$card"
 		}
@@ -486,74 +480,67 @@ Deputs "portname:[ lindex $row $port_name ]"
 
         set statsItem   "LastRxUpdateRouteCount"
         set statsVal    [ lindex $row $RxUpdateRoute ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret "$ret$statsItem $statsVal "
           
               
         set statsItem   "OutstandingRouteCount"
         set statsVal    [ lindex $row $OutstandingRoute ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret "$ret$statsItem $statsVal "
         
         set statsItem   "RxAdvertisedRouteCount"
         set statsVal    [ lindex $row $RxAdvertisedRoute ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret "$ret$statsItem $statsVal "
         
         set statsItem   "RxKeepAliveCount"
         set statsVal    [ lindex $row $RxKeepAlive ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret "$ret$statsItem $statsVal "
         
         set statsItem   "RxNotificationCount"
         set statsVal    [ lindex $row $RxNotification ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret "$ret$statsItem $statsVal "
         
         set statsItem   "RxOpenCount"
         set statsVal    [ lindex $row $RxOpen ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret "$ret$statsItem $statsVal "
         
         set statsItem   "RxWithdrawnRouteCount"
         set statsVal    [ lindex $row $RxWithdrawnRoute ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret "$ret$statsItem $statsVal "
         
         set statsItem   "TxKeepAliveCount"
         set statsVal    [ lindex $row $TxKeepAlive ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret "$ret$statsItem $statsVal "
         
         set statsItem   "TxNotificationCount"
         set statsVal    [ lindex $row $TxNotification ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret "$ret$statsItem $statsVal "
         
         set statsItem   "TxOpenCount"
         set statsVal    [ lindex $row $TxOpen ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret "$ret$statsItem $statsVal "
         
         set statsItem   "TxWithdrawnRouteCount"
         set statsVal    [ lindex $row $TxWithdrawnRoute ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret "$ret$statsItem $statsVal "
-			  
-
-
-
     }
         
     return $ret
-
-	
 }
-
 
 body BgpSession::wait_session_up { args } {
     set tag "body BgpSession::wait_session_up [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 	set timeout 300
 
