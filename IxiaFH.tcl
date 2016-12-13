@@ -670,6 +670,23 @@ namespace eval IxiaFH {
 			}
 		}
         if { $arp_enable } {
+            if { [llength $txList] == 0 } {
+                foreach streamobj [find objects] {
+                    if { [$streamobj isa Flow] } {
+                        lappend txList [ $streamobj cget -highLevelStream ]
+                    } elseif { [$streamobj isa Traffic] } {
+                        lappend txList [ $streamobj cget -handle ]
+                    } else {
+                        continue
+                    }
+                    set txItem [$streamobj cget -hTraffic]
+                    puts $txItem
+                    if { [ lsearch -exact $txItemList $txItem ] == -1 } {
+                        lappend txItemList $txItem
+                    }                    
+                }
+            }
+        
             set suspendList [list]
 			puts "txItemList: $txItemList"
 			if {$txItemList == ""} {
@@ -794,7 +811,6 @@ namespace eval IxiaFH {
             # foreach item [ ixNet getL $root/traffic trafficItem ] {
                # ixNet exec startDefaultLearning $item
             # }
-          
 		} else {
             ixNet exec apply $root/traffic
             after 3000
@@ -1267,7 +1283,13 @@ namespace eval IxiaFH {
 				  if { $trafficinfo== {} } {
 				    Deputs "trafficinfo is empty"
 				    Flow $tname $portn 
-					$tname config -rcv_ports $rxportlist -name $tname
+					$tname config -rcv_ports $rxportlist \
+                        -name $tname \
+                        -frame_len_type fixed \
+                        -frame_len 128 \
+                        -load_unit percent \
+                        -stream_load 10
+                        
 					set thandle [$tname cget -hTraffic]
 					set fhandle [$tname cget -handle]
 					lappend trafficinfo [list $thandle $portn $rxportlist ]
@@ -1287,7 +1309,13 @@ namespace eval IxiaFH {
 					if { $thandle == "" } {
 				       Deputs "trafficinfo is not matched"
 					   Flow $tname $portn 
-					   $tname config -rcv_ports $rxportlist -name $tname
+					   $tname config -rcv_ports $rxportlist \
+                        -name $tname \
+                        -frame_len_type fixed \
+                        -frame_len 128 \
+                        -load_unit percent \
+                        -stream_load 10
+                       
 					   set thandle [$tname cget -hTraffic]
 					   set fhandle [$tname cget -handle]
 					   lappend trafficinfo [list $thandle $portn $rxportlist ] 
@@ -1297,7 +1325,13 @@ namespace eval IxiaFH {
 					} else {
 				       Deputs "trafficinfo get thandle :$thandle"
 					   Flow $tname $portn "NULL" $thandle 
-					   $tname config -rcv_ports $rxportlist -name $tname
+					   $tname config -rcv_ports $rxportlist \
+                        -name $tname \
+                        -frame_len_type fixed \
+                        -frame_len 128 \
+                        -load_unit percent \
+                        -stream_load 10
+                       
 					   set fhandle [$tname cget -handle]
 					   Deputs "fhandle:$fhandle"
 					   lappend flownamelist $tname

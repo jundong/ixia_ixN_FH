@@ -313,7 +313,7 @@ Deputs "sys_id: $sys_id"
     	ixNet setA $handle -lspLifeTime $lsp_lifetime
     } 
 	if { [ info exists mac_addr ] } {
-Deputs "interface:$interface mac_addr:$mac_addr"
+        Deputs "interface:$interface mac_addr:$mac_addr"
 		ixNet setA $interface/ethernet -macAddress $mac_addr
 	}
 	if { [ info exists max_lspsize ] } {
@@ -323,7 +323,7 @@ Deputs "interface:$interface mac_addr:$mac_addr"
 		set interface [ixNet getL $handle interface]
 		if { $isis_authentication == "md5" } {
 			ixNet setM $interface -circuitAuthType md5 \
-				-circuitTransmitPassword $isis_md5_keyid
+				-circuitTransmitPassword $isis_password
         }
 		if { $isis_authentication == "simple" } {
 			ixNet setM $interface -circuitAuthType password \
@@ -332,22 +332,22 @@ Deputs "interface:$interface mac_addr:$mac_addr"
 	}
 	if { [ info exists area_authentication ] } {
 		if { $area_authentication == "md5" } {
-			ixNet setM $handle -areaAuthType MD5 \
-				-areaTransmitPassword $area_md5_keyid
+			ixNet setM $handle -areaAuthType md5 \
+				-areaTransmitPassword $password
         }
 		if { $area_authentication == "simple" } {
 			ixNet setM $handle -areaAuthType password \
-				-areaTransmitPassword $area_password
+				-areaTransmitPassword $password
         }
 	}
 	if { [ info exists domain_authentication ] } {
 		if { $domain_authentication == "md5" } {
-			ixNet setM $handle -domainAuthType MD5 \
-				-domainTransmitPassword $domian_md5_keyid
+			ixNet setM $handle -domainAuthType md5 \
+				-domainTransmitPassword $password
         }
 		if { $domain_authentication == "simple" } {
 			ixNet setM $handle -domainAuthType password \
-				-domainTransmitPassword $domian_password
+				-domainTransmitPassword $password
         }
 	}
 	# if { [ info exists areaList ] } {

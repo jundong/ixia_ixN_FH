@@ -392,7 +392,6 @@ body OspfSession::config { args } {
     global errNumber
 	set area_id "0.0.0.0"
 	set hello_interval 10
-	set network_type "broadcast" 
 	set options "v6bit | rbit | ebit"
 	set router_dead_interval 40
 	set intf_num 1
@@ -439,7 +438,6 @@ body OspfSession::config { args } {
                         error "$errNumber(1) key:$key value:$value, valid value are: broadcast or p2p"
                     }
                 }
-				set network_type $value
 			}
 			-options {
 				set options $value
@@ -485,17 +483,21 @@ body OspfSession::config { args } {
 		}
 		ixNet commit
 	}
+
 	if { [ info exists router_id ] } {
 		ixNet setA $handle -routerId $router_id
 		ixNet commit
-	}	
+	}
+
 	if { [ info exists area_id ] } {
 		set id_hex [IP2Hex $area_id]			
 		set area_id [format %i 0x$id_hex]
-        
 		set intf [ixNet getL $handle interface]
-		ixNet setA $intf -area $area_id
-		#ixNet setA $interface -area $area_id
+        if { $protocol == "ospf" } {
+            ixNet setA $intf -areaId $area_id
+        } else {
+            ixNet setA $intf -area $area_id
+        }
 		ixNet commit
 	}
 	if { [ info exists hello_interval ] } {
@@ -517,16 +519,19 @@ body OspfSession::config { args } {
         }
 		ixNet commit
 	}
-	
+    
 	# v3 -interfaceType pointToPoint, -interfaceType broadcast
 	# v2 -networkType pointToPoint, -networkType broadcast, -networkType pointToMultipoint
 	if { [ info exists network_type ] } {
-		puts "networktype:$network_type"
 		set intf [ixNet getL $handle interface]
-		ixNet setA $intf -networkType $network_type
+        if { $protocol == "ospf"  } {
+            ixNet setA $intf -networkType $network_type
+        } else {
+            ixNet setA $intf -interfaceType $network_type
+        }
 		ixNet commit
 	}
-	
+
 	# v3 -routerOptions
 	# v2 -options
 	if { [ info exists options ] } { 
@@ -568,28 +573,27 @@ body OspfSession::config { args } {
 		ixNet setA $intf -routerOptions $opt_val
 		ixNet commit
 	}
-	
+
 	if { [ info exists dead_interval ] } {
 		set intf [ixNet getL $handle interface]
-		puts "interface:$intf"
 		ixNet setA $intf -deadInterval $dead_interval
 		ixNet commit
 	}
-	
+
 	# v3 
 	# v2 -lsaRetransmitTime
 	if { [ info exists retransmit_interval ] } {
 		set intf [ixNet getL $handle interface]
-		puts "interface:$intf"
 		ixNet setA $intf -lsaRetransmitTime $retransmit_interval
 		ixNet commit
 	}
+
 	if { [ info exists priority ] } {
 		set intf [ixNet getL $handle interface]
-		puts "interface:$intf"
 		ixNet setA $intf -priority $priority
 		ixNet commit
 	}
+
 	if { [ info exists authentication ] } {
 		set intf [ixNet getL $handle interface]
 		if { $authentication == "md5" } {
@@ -609,8 +613,8 @@ body OspfSession::config { args } {
                     ixNet setA $intf -md5AuthenticationKey $password
                 }
             }
-            
         }
+
 		if { $authentication == "simple" } {
             ixNet setA $intf -authenticationMethods password
             set pass [ixNet getA $intf -authenticationPassword]
@@ -626,6 +630,7 @@ body OspfSession::config { args } {
                 }
             }
         }
+
 	}
 	if { [ info exists option ] } {
 		switch  $option {
@@ -640,6 +645,7 @@ body OspfSession::config { args } {
                 set opt $option
             }
 		}
+
 		set intf [ixNet getL $handle interface]
         if { $protocol == "ospf" } {
             ixNet setA $intf -options $opt
@@ -648,6 +654,7 @@ body OspfSession::config { args } {
         }
 		ixNet commit
 	}
+
 	if { [ info exists active ] } {
 		if { $active } {
 			ixNet setA $handle -enabled true
@@ -655,6 +662,7 @@ body OspfSession::config { args } {
 			ixNet setA $handle -enabled false
 		} 
 	}
+
 	ixNet commit
     return [GetStandardReturnHeader]
 }
@@ -1691,10 +1699,10 @@ Deputs "Args:$args "
 body Ospfv3Session::get_status {} {
 
 	set tag "body Ospfv3Session::get_status [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
     set root [ixNet getRoot]
-Deputs "root $root"
+    Deputs "root $root"
     set view {::ixNet::OBJ-/statistics/view:"OSPFv3 Aggregated Statistics"}
 	after 5000
     set captionList         [ ixNet getA $view/page -columnCaptions ]

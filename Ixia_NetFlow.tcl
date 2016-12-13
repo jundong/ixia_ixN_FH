@@ -23,7 +23,6 @@ class Flow {
     method GetProtocolTemp { pro } {}
     method GetField { stack field } {}
 
-    
 	method start {} {
 		set tag "body Flow::start [info script]"
 		Deputs "----- TAG: $tag -----"
@@ -38,13 +37,13 @@ class Flow {
 	}
 	method stop {} {
 		set tag "body Flow::stop [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		ixNet exec stopStatelessTraffic $handle
 		return [ GetStandardReturnHeader ]
 	}
 	method completed {} {
 		set tag "body Flow::completed [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 	
 		set rate [ GetStatsFromReturn [ get_stats ] tx_frame_rate ]
 		set tx [ GetStatsFromReturn [ get_stats ] tx_frame_count ]
@@ -57,7 +56,7 @@ Deputs "----- TAG: $tag -----"
 	
 	method wait_started {} {
 		set tag "body Flow::wait_started [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		set timeout 30
 		set start_click [ clock seconds ]
 		while { 1 } {
@@ -77,7 +76,7 @@ Deputs "----- TAG: $tag -----"
 	
 	method wait_stopped {} {
 		set tag "body Flow::wait_stopped [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		set timeout 30
 		set start_click [ clock seconds ]
 		while { 1 } {
@@ -97,14 +96,14 @@ Deputs "----- TAG: $tag -----"
 	
 	method suspend {} {
 		set tag "body Flow::suspend [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		ixNet setA $handle -suspend True
 		ixNet commit
 	}
 	
 	method unsuspend {} {
 		set tag "body Flow::unsuspend [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		ixNet setA $handle -suspend False
 		ixNet commit
 	}
@@ -205,9 +204,6 @@ body Flow::config { args  } {
     set ELoadUnit	[ list KBPS MBPS BPS FPS PERCENT ]
     set ELatencyType [list lifo lilo filo fifo]
 	
-    # set load_unit 		KBPS
-    # set stream_load 	10000
-    set frame_len		128
     set enable_sig		1
 	
 	set flag_modify_adv	0
@@ -215,9 +211,9 @@ body Flow::config { args  } {
 	set bidirection 0
 	
     set tag "body Flow::config [info script]"
-Deputs "----- TAG: $tag -----"
-#param collection
-Deputs "Args:$args "
+	Deputs "----- TAG: $tag -----"
+	#param collection
+	Deputs "Args:$args "
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {
@@ -234,8 +230,8 @@ Deputs "Args:$args "
 			 set dst $value
 		  }
 		  -pdu {
-			 set pdu $value
-Deputs "pdu:$pdu"
+				set pdu $value
+				Deputs "pdu:$pdu"
 		  }
 		  -tx_mode {
 			 set value [ string tolower $value ]
@@ -418,7 +414,8 @@ Deputs "pdu:$pdu"
 		
 		set endpointSet [ixNet  remapIds $endpointSet]
 		set highLevelStream [ lindex [ ixNet getL $hTraffic highLevelStream ] end ]		
-		set configElement [ lindex [ ixNet getL $hTraffic configElement ] end ]
+		#set configElement [ lindex [ ixNet getL $hTraffic configElement ] end ]
+		set configElement $highLevelStream
 		#set handle $highLevelStream
 		set handle $configElement
 		Deputs "handle: $handle "
@@ -556,9 +553,9 @@ Deputs Step180
 Deputs "handle:$handle"
 		  set endpointSet [ ixNet remapIds $endpointSet ]
 Deputs "ep:$endpointSet"
-		 set highLevelStream [ lindex [ ixNet getL $hTraffic highLevelStream ] end ]
-		
-		 set configElement [ lindex [ ixNet getL $hTraffic configElement ] end ]
+		set highLevelStream [ lindex [ ixNet getL $hTraffic highLevelStream ] end ]
+		#set configElement [ lindex [ ixNet getL $hTraffic configElement ] end ]
+		set configElement $highLevelStream
 		set handle $configElement
 		Deputs "handle: $handle "
 Deputs "highLevelStream:$highLevelStream"

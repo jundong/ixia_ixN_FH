@@ -38,49 +38,53 @@ IxDebugOn
 ::IxiaFH::device_create -name device3 -obj_type device -port port1 -args_value {-ipv4_address 13.13.13.1 -ipv4_mask 24 -ipv4_gateway 13.13.13.2}
 ::IxiaFH::device_create -name device4 -obj_type device -port port2 -args_value {-ipv4_address 13.13.13.2 -ipv4_mask 24 -ipv4_gateway 13.13.13.1}
 
-::IxiaFH::device_create -name device5 -obj_type device -port port1 -args_value {-ipv4_address 14.14.14.1 -ipv4_mask 24 -ipv4_gateway 14.14.14.2}
-::IxiaFH::device_create -name device6 -obj_type device -port port2 -args_value {-ipv4_address 14.14.14.2 -ipv4_mask 24 -ipv4_gateway 14.14.14.1}
+#::IxiaFH::device_create -name device5 -obj_type device -port port1 -args_value {-ipv4_address 14.14.14.1 -ipv4_mask 24 -ipv4_gateway 14.14.14.2}
+#::IxiaFH::device_create -name device6 -obj_type device -port port2 -args_value {-ipv4_address 14.14.14.2 -ipv4_mask 24 -ipv4_gateway 14.14.14.1}
+#
+#::IxiaFH::device_create -name router7 -obj_type device -port port1 -args_value {-ipv4_address 15.15.15.1 -ipv4_mask 24 -ipv4_gateway 15.15.15.2}
+#::IxiaFH::device_create -name router8 -obj_type device -port port2 -args_value {-ipv4_address 15.15.15.2 -ipv4_mask 24 -ipv4_gateway 15.15.15.1}
+#
+#
+#::IxiaFH::device_create -name device3.ospf1 -obj_type device.ospfv2 
+#::IxiaFH::device_config -name ospf1 -obj_type ospfv2 -args_value {-network_type p2p}
+#::IxiaFH::device_create -name device3.ospf1.lsa1 -obj_type device.ospfv2.netsummarylsa -args_value {-start_ip 1.0.0.1 -ip_count 100}
+#::IxiaFH::device_create -name device4.ospf2 -obj_type device.ospfv2 -args_value {-network_type p2p}
+#::IxiaFH::device_create -name device4.ospf2.lsa2 -obj_type device.ospfv2.netsummarylsa -args_value {-start_ip 2.0.0.1 -ip_count 100}
+#::IxiaFH::device_create -name device4.ospf2.lsa3 -obj_type device.ospfv2.externalsa -args_value {-start_ip 3.0.0.1 -ip_count 100}
+#
+#
+#::IxiaFH::device_create -name device5.isis1 -obj_type device.isis -args_value {-network_type p2p}
+##device_start -device {device5}
+##device_stop -device {device5}
+##device_start -device {device3 device5}
+#::IxiaFH::device_create -name device5.isis1.lsp1 -obj_type device.isis.isis_lsp -args_value {-sys_id 0000.0001.0001}  
+#::IxiaFH::device_create -name device5.isis1.lsp1.isisrouteblock1 -obj_type device.isis.isis_lsp.isis_ipv4route -args_value {-start_ip 4.0.0.1 -route_count 100}
+#::IxiaFH::device_create -name device5.isis1.lsp1.isisrouteblock2 -obj_type device.isis.isis_lsp.isis_ipv4route -args_value {-start_ip 5.0.0.1 -route_count 100 -route_type external}
+#::IxiaFH::device_create -name device6.isis2 -obj_type device.isis -args_value {-network_type p2p}
+#::IxiaFH::device_create -name device6.isis2.lsp2 -obj_type device.isis.isis_lsp -args_value {-sys_id 0000.0001.0002}  
+#::IxiaFH::device_create -name device6.isis2.lsp2.isisrouteblock3 -obj_type device.isis.isis_lsp.isis_ipv4route -args_value {-start_ip 6.0.0.1 -route_count 100}
+#::IxiaFH::device_create -name device6.isis2.lsp2.isisrouteblock4 -obj_type device.isis.isis_lsp.isis_ipv4route -args_value {-start_ip 7.0.0.1 -route_count 100}
+#
+#
+#::IxiaFH::device_create -name router7.bgp1 -obj_type device.bgp -args_value {-as_num 100 -dut_as 100 -dut_ip 15.15.15.2}
+#::IxiaFH::device_config -name router7.bgp1 -obj_type device.bgp -args_value {-keep_time 100 -dut_as 100 -dut_ip 15.15.15.2}
+#::IxiaFH::device_create -name router7.bgp1.bgprouteblock1 -obj_type device.bgp.bgp_ipv4route -args_value {-start_ip 8.0.0.1 -route_count 100}
+#::IxiaFH::device_create -name router8.bgp2 -obj_type device.bgp -args_value {-as_num 100 -dut_as 100 -dut_ip 15.15.15.1}
+#::IxiaFH::device_create -name router8.bgp2.bgprouteblock2 -obj_type device.bgp.bgp_ipv4route -args_value {-start_ip 9.0.0.1 -route_count 100}
 
-::IxiaFH::device_create -name router7 -obj_type device -port port1 -args_value {-ipv4_address 15.15.15.1 -ipv4_mask 24 -ipv4_gateway 15.15.15.2}
-::IxiaFH::device_create -name router8 -obj_type device -port port2 -args_value {-ipv4_address 15.15.15.2 -ipv4_mask 24 -ipv4_gateway 15.15.15.1}
+#::IxiaFH::device_start -device {device3}
+#::IxiaFH::device_start
 
-
-::IxiaFH::device_create -name device3.ospf1 -obj_type device.ospfv2 
-::IxiaFH::device_config -name ospf1 -obj_type ospfv2 -args_value {-network_type p2p}
-::IxiaFH::device_create -name device3.ospf1.lsa1 -obj_type device.ospfv2.netsummarylsa -args_value {-start_ip 1.0.0.1 -ip_count 100}
-::IxiaFH::device_create -name device4.ospf2 -obj_type device.ospfv2 -args_value {-network_type p2p}
-::IxiaFH::device_create -name device4.ospf2.lsa2 -obj_type device.ospfv2.netsummarylsa -args_value {-start_ip 2.0.0.1 -ip_count 100}
-::IxiaFH::device_create -name device4.ospf2.lsa3 -obj_type device.ospfv2.externalsa -args_value {-start_ip 3.0.0.1 -ip_count 100}
-
-
-::IxiaFH::device_create -name device5.isis1 -obj_type device.isis -args_value {-network_type p2p}
-device_start -device {device5}
-device_stop -device {device5}
-device_start -device {device3 device5}
-::IxiaFH::device_create -name device5.isis1.lsp1 -obj_type device.isis.isis_lsp -args_value {-sys_id 0000.0001.0001}  
-::IxiaFH::device_create -name device5.isis1.lsp1.isisrouteblock1 -obj_type device.isis.isis_lsp.isis_ipv4route -args_value {-start_ip 4.0.0.1 -route_count 100}
-::IxiaFH::device_create -name device5.isis1.lsp1.isisrouteblock2 -obj_type device.isis.isis_lsp.isis_ipv4route -args_value {-start_ip 5.0.0.1 -route_count 100 -route_type external}
-::IxiaFH::device_create -name device6.isis2 -obj_type device.isis -args_value {-network_type p2p}
-::IxiaFH::device_create -name device6.isis2.lsp2 -obj_type device.isis.isis_lsp -args_value {-sys_id 0000.0001.0002}  
-::IxiaFH::device_create -name device6.isis2.lsp2.isisrouteblock3 -obj_type device.isis.isis_lsp.isis_ipv4route -args_value {-start_ip 6.0.0.1 -route_count 100}
-::IxiaFH::device_create -name device6.isis2.lsp2.isisrouteblock4 -obj_type device.isis.isis_lsp.isis_ipv4route -args_value {-start_ip 7.0.0.1 -route_count 100}
-
-
-::IxiaFH::device_create -name router7.bgp1 -obj_type device.bgp -args_value {-as_num 100 -dut_as 100 -dut_ip 15.15.15.2}
-::IxiaFH::device_config -name router7.bgp1 -obj_type device.bgp -args_value {-keep_time 100 -dut_as 100 -dut_ip 15.15.15.2}
-::IxiaFH::device_create -name router7.bgp1.bgprouteblock1 -obj_type device.bgp.bgp_ipv4route -args_value {-start_ip 8.0.0.1 -route_count 100}
-::IxiaFH::device_create -name router8.bgp2 -obj_type device.bgp -args_value {-as_num 100 -dut_as 100 -dut_ip 15.15.15.1}
-::IxiaFH::device_create -name router8.bgp2.bgprouteblock2 -obj_type device.bgp.bgp_ipv4route -args_value {-start_ip 9.0.0.1 -route_count 100}
-
-::IxiaFH::device_start -device {device3}
-::IxiaFH::device_start
-
-::IxiaFH::device_stop -device {device3}
-::IxiaFH::device_stop
+#::IxiaFH::device_stop -device {device3}
+#::IxiaFH::device_stop
 
 ::IxiaFH::traffic_create -name streamblock1 -port port1 -rxport port2 -srcip 4.4.4.4 -dstip 8.8.8.8 -cvlanid 100
- ::IxiaFH::traffic_create -name streamblock2 -port port1 -rxport port2 -cvlanid 100
-  # ::IxiaFH::traffic_create -name streamblock4 -port port1 -rxport {port2 port3}
+::IxiaFH::traffic_create -name streamblock2 -port port1 -rxport port2 -cvlanid 100
+::IxiaFH::traffic_config -name streamblock2 -framesize_fix 1280
+#catch { ::IxiaFH::traffic_start -streamblock {streamblock1 streamblock2} }
+::IxiaFH::traffic_start -arp 1
+#catch { ::IxiaFH::traffic_start }
+::IxiaFH::traffic_create -name streamblock4 -port port1 -rxport {port2 port3}
 # ::IxiaFH::traffic_create -name port1_port2_1 -port port1 -srcbinding device1 -dstbinding device2
 # ::IxiaFH::traffic_create -name port2_port1_1 -port port2 -srcbinding device2 -dstbinding device1
 # ::IxiaFH::traffic_create -name port1_port2_2 -port port1 -srcbinding device3 -dstbinding ospf2
@@ -104,9 +108,9 @@ device_start -device {device3 device5}
 
 
 
-# ::IxiaFH::device_create -port port1 -name device11 -obj_type device -args_value "-router_id 192.0.0.1 -src_mac 00:00:01:00:00:01 -ipv6_address 2001::10 -ipv6_gateway 2001::20 -ipv6_link_local_address fe80::123:456:789:abc"
+::IxiaFH::device_create -port port1 -name device11 -obj_type device -args_value "-router_id 192.0.0.1 -src_mac 00:00:01:00:00:01 -ipv6_address 2001::10 -ipv6_gateway 2001::20 -ipv6_link_local_address fe80::123:456:789:abc"
 # ::IxiaFH::device_create -port port2 -name device12 -obj_type device -args_value "-router_id 192.0.0.2 -src_mac 00:00:01:00:00:02 -ipv6_address 2001::20 -ipv6_gateway 2001::10"
-::IxiaFH::device_create -name device11.Ospfv3Router1 -obj_type device.ospfv3 -args_value {-area_id 0.0.0.1 -instance_id 100 -network_type p2p -router_pri 3 -option 13}
+::IxiaFH::device_create -name device11.Ospfv3Router1 -obj_type device.ospfv3 
 ::IxiaFH::device_config -name device11.Ospfv3Router1 -obj_type device.ospfv3 -args_value {-area_id 0.0.0.1 -instance_id 100 -network_type p2p -router_pri 3 -option 13}
 # ::IxiaFH::device_create -name device12.Ospfv3Router2 -obj_type device.ospfv3 -args_value {-area_id 0.0.0.1 -instance_id 10 -network_type p2p -router_pri 2 -option 13}
 ::IxiaFH::device_create -name device11.Ospfv3Router1.Ospfv3Route11 -obj_type device.ospfv3.interarea_prefixlsa -args_value "-start_address 2020::1 -route_count 100 -metric_lsa 10"
