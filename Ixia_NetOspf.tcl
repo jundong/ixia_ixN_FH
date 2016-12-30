@@ -390,12 +390,6 @@ class SimulatedIntraAreaRoute {
 body OspfSession::config { args } {
     global errorInfo
     global errNumber
-	set area_id "0.0.0.0"
-	set hello_interval 10
-	set options "v6bit | rbit | ebit"
-	set router_dead_interval 40
-	set intf_num 1
-	set active 0
                       
     set tag "body OspfSession::config [info script]"
     Deputs "----- TAG: $tag -----"
@@ -500,16 +494,19 @@ body OspfSession::config { args } {
         }
 		ixNet commit
 	}
+
 	if { [ info exists hello_interval ] } {
 		set intf [ixNet getL $handle interface]
 		ixNet setA $intf -helloInterval $hello_interval	
 		ixNet commit
 	}
+
 	if { [ info exists instance_id ] } {
 		set intf [ixNet getL $handle interface]
 		ixNet setA $intf -instanceId $instance_id
 		ixNet commit
 	}
+
 	if { [ info exists if_cost ] } {	
 		set intf [ixNet getL $handle interface]
         if { $protocol == "ospf" } {
@@ -519,7 +516,7 @@ body OspfSession::config { args } {
         }
 		ixNet commit
 	}
-    
+
 	# v3 -interfaceType pointToPoint, -interfaceType broadcast
 	# v2 -networkType pointToPoint, -networkType broadcast, -networkType pointToMultipoint
 	if { [ info exists network_type ] } {
@@ -1343,19 +1340,6 @@ body Ospfv2Session::config { args } {
 	global errorInfo
 	global errNumber
 	
-	set ipv4_prefix_len 24
-	set ipv4_gw 192.85.1.1
-	set loopback_ipv4_gw 192.85.1.1
-	set ipv4_addr_step	0.0.0.1
-	set outer_vlan_step	1
-	set inner_vlan_step	1
-	set outer_vlan_num 1
-	set inner_vlan_num 1
-	set outer_vlan_priority 0
-	set inner_vlan_priority 0
-	set count 		1
-	set enabled 		True
-	
 	set tag "body Ospfv2Session::config [info script]"
     Deputs "----- TAG: $tag -----"
             
@@ -1449,9 +1433,15 @@ body Ospfv2Session::config { args } {
 			}
 			-loopback_ipv4_addr {
 				set loopback_ipv4_addr $value
+                if { ![info exists loopback_ipv4_gw] } {
+                    set loopback_ipv4_gw 192.85.1.1
+                }
 			}
 			-loopback_ipv4_gw {
 				set loopback_ipv4_gw $value
+                if { ![info exists loopback_ipv4_addr] } {
+                    set loopback_ipv4_addr 192.85.1.2
+                }
 			}
 		}
 	}
@@ -1463,74 +1453,69 @@ body Ospfv2Session::config { args } {
 			if { [ ixNet getA $rb -type ] == "routed" } {
 				continue
 			}
-			ixNet setM $rb/ipv4 \
-				-ip $ipv4_addr \
-				-gateway $ipv4_gw \
-				-maskWidth $ipv4_prefix_len
+			ixNet setA $rb/ipv4 -ip $ipv4_addr 
 			ixNet commit
 		}
- 		generate_interface	
+ 		#generate_interface	
 	}	
-	
+	if { [ info exists ipv4_prefix_len ] } {
+		foreach rb $rb_interface {
+			if { [ ixNet getA $rb -type ] == "routed" } {
+				continue
+			}
+			ixNet setM $rb/ipv4 -maskWidth $ipv4_prefix_len
+			ixNet commit
+		}
+ 		#generate_interface	
+	}
+	if { [ info exists ipv4_gw ] } {
+		foreach rb $rb_interface {
+			if { [ ixNet getA $rb -type ] == "routed" } {
+				continue
+			}
+			ixNet setM $rb/ipv4 -gateway $ipv4_gw 
+			ixNet commit
+		}
+ 		#generate_interface	
+	}
 	if {[ info exists outer_vlan_id ]} {
 		foreach int $rb_interface {
-			for { set index 0 } { $index < $count } { incr index } {
-				Deputs "int:$int"	
-				if { [ info exists outer_vlan_id ] } {
-					set vlanId $outer_vlan_id
-				ixNet setM $int/vlan \
-					-count 1 \
-					-vlanEnable True \
-					-vlanId $vlanId \
-					-vlanPriority   $outer_vlan_priority
-				ixNet commit
-				incr outer_vlan_id $outer_vlan_step
-					
-				}
-				if { [ info exists inner_vlan_id ] } {
-					set vlanId $inner_vlan_id
-					set innerPri $inner_vlan_priority
-					set vlanId1	[ ixNet getA $int/vlan -vlanId ]					
-					set vlanId	"${vlanId1},${vlanId}"
-					
-					set outerPri [ ixNet getA $int/vlan -vlanPriority]
-					set Pri "${outerPri},${innerPri}"
-					ixNet setM $int/vlan \
-								-count 2 \
-								-vlanEnable True \
-								-vlanId $vlanId \
-					               -vlanPriority $Pri
-					ixNet commit
-					incr inner_vlan_id $inner_vlan_step
-					
-				}
-				#if { [ info exists outer_vlan_priority ] } {
-				#	set vlanId $outer_vlan_priority
-				#ixNet setM $int/vlan \
-				#	-count 1 \
-				#     -vlanEnable True \
-				#	-vlanId $vlanId
-				#	ixNet commit
-				#	incr outer_vlan_id $outer_vlan_step					
-				#}
-				#
-				#if { [ info exists inner_vlan_id ] } {
-				#	set vlanId $inner_vlan_id
-				#	set vlanId1	[ ixNet getA $int/vlan -vlanId ]
-				#	set vlanId	"${vlanId1},${vlanId}"
-				#	ixNet setM $int/vlan \
-				#	-count 2 \
-				#	-vlanEnable True \
-				#	-vlanId $vlanId
-				#	ixNet commit
-				#	incr inner_vlan_id $inner_vlan_step
-				#	
-				#}
-				if { [ info exists enabled ] } {
-					ixNet setA $int -enabled $enabled
-					ixNet commit			
-				}
-			}
+            if { [ info exists outer_vlan_id ] } {
+                set vlanId $outer_vlan_id
+                ixNet setM $int/vlan \
+                    -count 1 \
+                    -vlanEnable True \
+                    -vlanId $vlanId
+                ixNet commit
+
+                if { [ info exists outer_vlan_priority ] } {
+                    ixNet setM $int/vlan -vlanPriority $outer_vlan_priority
+                    ixNet commit
+                }
+                
+                if { [ info exists inner_vlan_id ] } {
+                    set inVlanId $inner_vlan_id
+                    set vlanId1	[ ixNet getA $int/vlan -vlanId ]					
+                    set vlanId	"${vlanId1},${inVlanId}"
+                    ixNet setM $int/vlan \
+                                -count 2 \
+                                -vlanEnable True \
+                                -vlanId $vlanId 
+                    ixNet commit
+                    
+                    if { [ info exists inner_vlan_priority ] } {
+                        set outerPri [ ixNet getA $int/vlan -vlanPriority]
+                        set Pri "${outerPri},${inner_vlan_priority}"
+                        ixNet setM $int/vlan -vlanPriority $Pri
+                        ixNet commit
+                    }
+                }
+            }
+
+            if { [ info exists enabled ] } {
+                ixNet setA $int -enabled $enabled
+                ixNet commit			
+            }
 		}
 	}
 	
@@ -1619,7 +1604,7 @@ Deputs "----- TAG: $tag -----"
 body OspfSession::unset_topo {} {
 	
 	set tag "body OspfSession::unset_topo [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 	ixNet remove $hNetworkRange
 	ixNet commit
@@ -1629,10 +1614,10 @@ body SimulatedInterAreaRoute::config { args } {
     global errorInfo
     global errNumber
     set tag "body SimulatedInterAreaRoute::config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
-#param collection
-Deputs "Args:$args "
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {
@@ -1718,26 +1703,25 @@ body Ospfv3Session::get_status {} {
 	set full_index				[ lsearch -exact $captionList {Full State Count} ]
 	
 	set stats [ ixNet getA $view/page -rowValues ]
-Deputs "stats:$stats"
+    Deputs "stats:$stats"
     set portFound 0
     foreach row $stats {
-	   eval {set row} $row
-Deputs "row:$row"
-Deputs "port index:$name_index"
-	   set rowPortName [ lindex $row $name_index ]
-Deputs "row port name:$name_index"
-    set connectionInfo [ ixNet getA $hPort -connectionInfo ]
-Deputs "connectionInfo :$connectionInfo"
-    regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
-Deputs "chas:$chassis card:$card port$port"
-	set portName ${chassis}/Card${card}/Port${port}
-Deputs "filter name: $portName"
+        eval {set row} $row
+        Deputs "row:$row"
+        Deputs "port index:$name_index"
+        set rowPortName [ lindex $row $name_index ]
+        Deputs "row port name:$name_index"
+        set connectionInfo [ ixNet getA $hPort -connectionInfo ]
+        Deputs "connectionInfo :$connectionInfo"
+        regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
+        Deputs "chas:$chassis card:$card port$port"
+        set portName ${chassis}/Card${card}/Port${port}
+        Deputs "filter name: $portName"
 	   if { [ regexp $portName $rowPortName ] } {
 		  set portFound 1
 		  break
 	   }
     }	
-	
 
 	set status "down"
 
@@ -1775,13 +1759,11 @@ Deputs "filter name: $portName"
 		if { $full } {
 			set status "full"
 		}
-		
 	}	
 	
     set ret [ GetStandardReturnHeader ]
     set ret $ret[ GetStandardReturnBody "status" $status ]
 	return $ret
-	
 }
 
 body Ospfv3Session::get_stats {} {
@@ -2043,19 +2025,6 @@ body Ospfv3Session::config { args } {
 	global errorInfo
 	global errNumber
 	
-	set ipv6_prefix_len 64
-	set ipv6_gw 3ffe:3210::1
-	set ipv6_addr_step	::1
-	set outer_vlan_step	1
-	set inner_vlan_step	1
-	set outer_vlan_num 1
-	set inner_vlan_num 1
-	set outer_vlan_priority 0
-	set inner_vlan_priority 0
-
-	set count 		1
-	set enabled 		True
-	
 	set tag "body Ospfv3Session::config [info script]"
     Deputs "----- TAG: $tag -----"
 	
@@ -2153,11 +2122,15 @@ body Ospfv3Session::config { args } {
 			if { [ llength [ ixNet getList $int ipv6 ] ] == 0 } {
 				set ipv6Int   [ ixNet add $int ipv6 ]				
 			} else {
-				set ipv6Int   [ lindex [ ixNet getList $int ipv6 ] 0 ]				
+				set ipv6Int   [ lindex [ ixNet getList $int ipv6 ] end ]				
 			}
-			ixNet setA $ipv6Int -ip $ipv6_addr 
-			ixNet setA $ipv6Int -prefixLength $ipv6_prefix_len
-			ixNet setA $ipv6Int -gateway $ipv6_gw
+			ixNet setA $ipv6Int -ip $ipv6_addr
+            if { [ info exists ipv6_prefix_len ] } {
+                ixNet setA $ipv6Int -prefixLength $ipv6_prefix_len
+            }
+            if { [ info exists ipv6_gw ] } {
+                ixNet setA $ipv6Int -gateway $ipv6_gw
+            }
             ixNet commit
 		}
 		ixNet commit
@@ -2165,66 +2138,42 @@ body Ospfv3Session::config { args } {
 	
 	if {[ info exists outer_vlan_id ]} {
 		foreach int $rb_interface {
-			for { set index 0 } { $index < $count } { incr index } {
-				Deputs "int:$int"	
-				if { [ info exists outer_vlan_id ] } {
-					set vlanId $outer_vlan_id
-				ixNet setM $int/vlan \
-					-count 1 \
-					-vlanEnable True \
-					-vlanId $vlanId \
-					-vlanPriority   $outer_vlan_priority
-				ixNet commit
-				incr outer_vlan_id $outer_vlan_step
-					
-				}
-				if { [ info exists inner_vlan_id ] } {
-					set vlanId $inner_vlan_id
-					set innerPri $inner_vlan_priority
-					set vlanId1	[ ixNet getA $int/vlan -vlanId ]					
-					set vlanId	"${vlanId1},${vlanId}"
-					
-					set outerPri [ ixNet getA $int/vlan -vlanPriority]
-					set Pri "${outerPri},${innerPri}"
-					ixNet setM $int/vlan \
-								-count 2 \
-								-vlanEnable True \
-								-vlanId $vlanId \
-					               -vlanPriority $Pri
-					ixNet commit
-					incr inner_vlan_id $inner_vlan_step
-					
-				}
-				#if { [ info exists outer_vlan_priority ] } {
-				#	set vlanId $outer_vlan_priority
-				#ixNet setM $int/vlan \
-				#	-count 1 \
-				#     -vlanEnable True \
-				#	-vlanId $vlanId
-				#	ixNet commit
-				#	incr outer_vlan_id $outer_vlan_step					
-				#}
-				#
-				#if { [ info exists inner_vlan_id ] } {
-				#	set vlanId $inner_vlan_id
-				#	set vlanId1	[ ixNet getA $int/vlan -vlanId ]
-				#	set vlanId	"${vlanId1},${vlanId}"
-				#	ixNet setM $int/vlan \
-				#	-count 2 \
-				#	-vlanEnable True \
-				#	-vlanId $vlanId
-				#	ixNet commit
-				#	incr inner_vlan_id $inner_vlan_step
-				#	
-				#}
-				if { [ info exists enabled ] } {
-					ixNet setA $int -enabled $enabled
-					ixNet commit			
-					
-				}
-				
-			}
-			
+            if { [ info exists outer_vlan_id ] } {
+                set vlanId $outer_vlan_id
+                ixNet setM $int/vlan \
+                    -count 1 \
+                    -vlanEnable True \
+                    -vlanId $vlanId
+                ixNet commit
+
+                if { [ info exists outer_vlan_priority ] } {
+                    ixNet setM $int/vlan -vlanPriority $outer_vlan_priority
+                    ixNet commit
+                }
+                
+                if { [ info exists inner_vlan_id ] } {
+                    set inVlanId $inner_vlan_id
+                    set vlanId1	[ ixNet getA $int/vlan -vlanId ]					
+                    set vlanId	"${vlanId1},${inVlanId}"
+                    ixNet setM $int/vlan \
+                                -count 2 \
+                                -vlanEnable True \
+                                -vlanId $vlanId 
+                    ixNet commit
+                    
+                    if { [ info exists inner_vlan_priority ] } {
+                        set outerPri [ ixNet getA $int/vlan -vlanPriority]
+                        set Pri "${outerPri},${inner_vlan_priority}"
+                        ixNet setM $int/vlan -vlanPriority $Pri
+                        ixNet commit
+                    }
+                }
+            }
+
+            if { [ info exists enabled ] } {
+                ixNet setA $int -enabled $enabled
+                ixNet commit			
+            }
 		}
 	}
 	

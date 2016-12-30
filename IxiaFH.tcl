@@ -544,7 +544,7 @@ namespace eval IxiaFH {
         
         set restartCapture 0
         set arp_enable 0
-		set regenerate 0
+		set regenerate 1
 				
 		foreach { key value } $args {
 			set key [string tolower $key]
@@ -561,8 +561,10 @@ namespace eval IxiaFH {
 				}
 				-arp {
 					set arp_enable $value
-					set regenerate $value
 				}
+                -regenerate {
+                    set regenerate $value
+                }
 				default {
                     Logto -msg "$errNumber(3) key:$key value:$value" -level "error"
 					error "$errNumber(3) key:$key value:$value"
@@ -599,7 +601,6 @@ namespace eval IxiaFH {
                                     if { [ lsearch -exact $txItemList $txItem ] == -1 } {
                                         lappend txItemList $txItem
                                     }
-                                    
                                 }      
                             }    
                         }
@@ -663,13 +664,14 @@ namespace eval IxiaFH {
 		foreach hPort $temportList {
 			if { [ ixNet getA $hPort/capture    -hardwareEnabled  ] } {
 				set restartCapture 1
-		    Logto -info "restartCapture enabled"
+                Logto -info "restartCapture enabled"
                 ixNet exec stopCapture
                 after 1000
 				break
 			}
 		}
-        if { $arp_enable } {
+        
+        if { $regenerate } { 
             if { [llength $txList] == 0 } {
                 foreach streamobj [find objects] {
                     if { [$streamobj isa Flow] } {
@@ -688,87 +690,187 @@ namespace eval IxiaFH {
             }
         
             set suspendList [list]
-			puts "txItemList: $txItemList"
-			if {$txItemList == ""} {
-			    set txItemList $trafficlist
-				set txList $flowlist
-				# puts "txItemList: $txItemList"
-				# puts "txList: $txList"
-			}
-			if { $regenerate } { 
-			    set rg_namelist ""
-				set rg_ratelist ""
-				set rg_ratemode ""
-				set rg_sizetype ""
-				set rg_fixedsize ""
-				set rg_incrfrom ""
-				set rg_incrstep ""
-				set rg_incrto ""
-				
-			    foreach flow $txList {
-				    lappend rg_namelist [ ixNet getA $flow -name ]
-                    if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
-                        set frame_rate [ ixNet getL $flow frameRate ]
-                    } else {
-                        set frame_rate [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameRate ]
-                    }
-					lappend rg_ratelist [ ixNet getA $frame_rate -rate ]
-					lappend rg_ratemode [ ixNet getA $frame_rate -type ]
-                    if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
-                        set frame_size [ ixNet getL $flow frameSize ]
-                    } else {
-                        set frame_size [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameSize ]
-                    }
-					lappend rg_sizetype [ ixNet getA $frame_size -type ]
-					lappend rg_fixedsize [ ixNet getA $frame_size -fixedSize ]
-					lappend rg_incrfrom [ ixNet getA $frame_size -incrementFrom ]
-					lappend rg_incrstep [ ixNet getA $frame_size -incrementStep ]
-					lappend rg_incrto [ ixNet getA $frame_size -incrementTo ]
-				}		
-			}
+            puts "txItemList: $txItemList"
+            if {$txItemList == ""} {
+                set txItemList $trafficlist
+                set txList $flowlist
+                # puts "txItemList: $txItemList"
+                # puts "txList: $txList"
+            }
+        
+            set rg_namelist ""
+            set rg_ratelist ""
+            set rg_ratemode ""
+            set rg_sizetype ""
+            set rg_fixedsize ""
+            set rg_incrfrom ""
+            set rg_incrstep ""
+            set rg_incrto ""
+            
+            foreach flow $txList {
+                lappend rg_namelist [ ixNet getA $flow -name ]
+                if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
+                    set frame_rate [ ixNet getL $flow frameRate ]
+                } else {
+                    set frame_rate [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameRate ]
+                }
+                lappend rg_ratelist [ ixNet getA $frame_rate -rate ]
+                lappend rg_ratemode [ ixNet getA $frame_rate -type ]
+                if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
+                    set frame_size [ ixNet getL $flow frameSize ]
+                } else {
+                    set frame_size [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameSize ]
+                }
+                lappend rg_sizetype [ ixNet getA $frame_size -type ]
+                lappend rg_fixedsize [ ixNet getA $frame_size -fixedSize ]
+                lappend rg_incrfrom [ ixNet getA $frame_size -incrementFrom ]
+                lappend rg_incrstep [ ixNet getA $frame_size -incrementStep ]
+                lappend rg_incrto [ ixNet getA $frame_size -incrementTo ]
+            }
+            
             # foreach item $txItemList { 
             # puts $item			
                 # ixNet exec generate $item
             # }
             Logto -info "generate flow"
             ixNet exec generate $txItemList
-			
-			if { $regenerate } { 
-			    set rgname ""
-				set rgrate ""
-				set rgmode ""
-				set rgsizetype ""
-				set rgfixed ""
-				set rgincrfrom ""
-				set rgincrstep ""
-				set rgincrto ""
-			   
-			    foreach flow $txList rgname $rg_namelist rgrate $rg_ratelist rgmode $rg_ratemode \
-				rgsizetype $rg_sizetype rgfixed $rg_fixedsize rgincrfrom $rg_incrfrom \
-				rgincrstep $rg_incrstep rgincrto $rg_incrto {
-				    ixNet setA $flow -name  $rgname
-                    if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
-                        set frame_rate [ ixNet getL $flow frameRate ]
-                    } else {
-                        set frame_rate [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameRate ]
-                    }
-					ixNet setM $frame_rate -type $rgmode  \
-					                       -rate $rgrate
-                    
-                    if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
-                        set frame_size [ ixNet getL $flow frameSize ]
-                    } else {
-                        set frame_size [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameSize ]
-                    }
-					ixNet setM $frame_size -type $rgsizetype  \
-					                       -fixedSize $rgfixed \
-                                           -incrementFrom $rgincrfrom \
-										   -incrementStep  $rgincrstep \
-										   -incrementTo    $rgincrto
-				}
-				
-				ixNet commit
-			}
+        
+            set rgname ""
+            set rgrate ""
+            set rgmode ""
+            set rgsizetype ""
+            set rgfixed ""
+            set rgincrfrom ""
+            set rgincrstep ""
+            set rgincrto ""
+           
+            foreach flow $txList rgname $rg_namelist rgrate $rg_ratelist rgmode $rg_ratemode \
+            rgsizetype $rg_sizetype rgfixed $rg_fixedsize rgincrfrom $rg_incrfrom \
+            rgincrstep $rg_incrstep rgincrto $rg_incrto {
+                ixNet setA $flow -name  $rgname
+                if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
+                    set frame_rate [ ixNet getL $flow frameRate ]
+                } else {
+                    set frame_rate [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameRate ]
+                }
+                ixNet setM $frame_rate -type $rgmode  \
+                                       -rate $rgrate
+                
+                if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
+                    set frame_size [ ixNet getL $flow frameSize ]
+                } else {
+                    set frame_size [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameSize ]
+                }
+                ixNet setM $frame_size -type $rgsizetype  \
+                                       -fixedSize $rgfixed \
+                                       -incrementFrom $rgincrfrom \
+                                       -incrementStep  $rgincrstep \
+                                       -incrementTo    $rgincrto
+            }
+            
+            ixNet commit
+        }
+    
+        if { $arp_enable } {
+#            if { [llength $txList] == 0 } {
+#                foreach streamobj [find objects] {
+#                    if { [$streamobj isa Flow] } {
+#                        lappend txList [ $streamobj cget -highLevelStream ]
+#                    } elseif { [$streamobj isa Traffic] } {
+#                        lappend txList [ $streamobj cget -handle ]
+#                    } else {
+#                        continue
+#                    }
+#                    set txItem [$streamobj cget -hTraffic]
+#                    puts $txItem
+#                    if { [ lsearch -exact $txItemList $txItem ] == -1 } {
+#                        lappend txItemList $txItem
+#                    }                    
+#                }
+#            }
+#        
+#            set suspendList [list]
+#			puts "txItemList: $txItemList"
+#			if {$txItemList == ""} {
+#			    set txItemList $trafficlist
+#				set txList $flowlist
+#				# puts "txItemList: $txItemList"
+#				# puts "txList: $txList"
+#			}
+#			if { $regenerate } { 
+#			    set rg_namelist ""
+#				set rg_ratelist ""
+#				set rg_ratemode ""
+#				set rg_sizetype ""
+#				set rg_fixedsize ""
+#				set rg_incrfrom ""
+#				set rg_incrstep ""
+#				set rg_incrto ""
+#				
+#			    foreach flow $txList {
+#				    lappend rg_namelist [ ixNet getA $flow -name ]
+#                    if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
+#                        set frame_rate [ ixNet getL $flow frameRate ]
+#                    } else {
+#                        set frame_rate [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameRate ]
+#                    }
+#					lappend rg_ratelist [ ixNet getA $frame_rate -rate ]
+#					lappend rg_ratemode [ ixNet getA $frame_rate -type ]
+#                    if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
+#                        set frame_size [ ixNet getL $flow frameSize ]
+#                    } else {
+#                        set frame_size [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameSize ]
+#                    }
+#					lappend rg_sizetype [ ixNet getA $frame_size -type ]
+#					lappend rg_fixedsize [ ixNet getA $frame_size -fixedSize ]
+#					lappend rg_incrfrom [ ixNet getA $frame_size -incrementFrom ]
+#					lappend rg_incrstep [ ixNet getA $frame_size -incrementStep ]
+#					lappend rg_incrto [ ixNet getA $frame_size -incrementTo ]
+#				}		
+#			}
+#            # foreach item $txItemList { 
+#            # puts $item			
+#                # ixNet exec generate $item
+#            # }
+#            Logto -info "generate flow"
+#            ixNet exec generate $txItemList
+#			
+#			if { $regenerate } { 
+#			    set rgname ""
+#				set rgrate ""
+#				set rgmode ""
+#				set rgsizetype ""
+#				set rgfixed ""
+#				set rgincrfrom ""
+#				set rgincrstep ""
+#				set rgincrto ""
+#			   
+#			    foreach flow $txList rgname $rg_namelist rgrate $rg_ratelist rgmode $rg_ratemode \
+#				rgsizetype $rg_sizetype rgfixed $rg_fixedsize rgincrfrom $rg_incrfrom \
+#				rgincrstep $rg_incrstep rgincrto $rg_incrto {
+#				    ixNet setA $flow -name  $rgname
+#                    if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
+#                        set frame_rate [ ixNet getL $flow frameRate ]
+#                    } else {
+#                        set frame_rate [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameRate ]
+#                    }
+#					ixNet setM $frame_rate -type $rgmode  \
+#					                       -rate $rgrate
+#                    
+#                    if { [regexp {^(.+)\/highLevelStream.+$} $flow] } {
+#                        set frame_size [ ixNet getL $flow frameSize ]
+#                    } else {
+#                        set frame_size [ ixNet getL [lindex [ixNet getL $flow highLevelStream] 0] frameSize ]
+#                    }
+#					ixNet setM $frame_size -type $rgsizetype  \
+#					                       -fixedSize $rgfixed \
+#                                           -incrementFrom $rgincrfrom \
+#										   -incrementStep  $rgincrstep \
+#										   -incrementTo    $rgincrto
+#				}
+#				
+#				ixNet commit
+#			}
 		
             after 5000
             foreach fname $flownamelist fobj $flowlist  {

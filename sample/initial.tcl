@@ -25,11 +25,11 @@ lappend auto_path {C:\Ixia\Workspace\ixia_ixN_FH}
 package req IxiaFH
 Login
 IxDebugOn
-#::IxiaFH::port_create -name port1 
-#::IxiaFH::port_create -name port2 
-::IxiaFH::port_create  -name port1  -port_location //172.16.174.134/1/1 -port_type EthernetFiber 
+::IxiaFH::port_create -name port1 
+::IxiaFH::port_create -name port2 
+#::IxiaFH::port_create  -name port1  -port_location //172.16.174.134/1/1 -port_type EthernetFiber 
 #::IxiaFH::port_modify  -port port1  -media fiber  -speed 1g 
-::IxiaFH::port_create  -name port2  -port_location //172.16.174.134/2/1 -port_type EthernetFiber 
+#::IxiaFH::port_create  -name port2  -port_location //172.16.174.134/2/1 -port_type EthernetFiber 
 #::IxiaFH::port_modify  -port port2  -media fiber  -speed 1g 
 
 ::IxiaFH::device_create -name device1 -obj_type device -port port1 -args_value {-ipv4_address 12.12.12.1 -ipv4_mask 24 -ipv4_gateway 12.12.12.2} 
@@ -45,8 +45,8 @@ IxDebugOn
 #::IxiaFH::device_create -name router8 -obj_type device -port port2 -args_value {-ipv4_address 15.15.15.2 -ipv4_mask 24 -ipv4_gateway 15.15.15.1}
 #
 #
-#::IxiaFH::device_create -name device3.ospf1 -obj_type device.ospfv2 
-#::IxiaFH::device_config -name ospf1 -obj_type ospfv2 -args_value {-network_type p2p}
+::IxiaFH::device_create -name device3.ospf1 -obj_type device.ospfv2 
+::IxiaFH::device_config -name ospf1 -obj_type ospfv2 -args_value {-network_type p2p -ipv4_addr 1.1.1.111 -ipv4_prefix_len 16 -ipv4_gw 1.1.1.1}
 #::IxiaFH::device_create -name device3.ospf1.lsa1 -obj_type device.ospfv2.netsummarylsa -args_value {-start_ip 1.0.0.1 -ip_count 100}
 #::IxiaFH::device_create -name device4.ospf2 -obj_type device.ospfv2 -args_value {-network_type p2p}
 #::IxiaFH::device_create -name device4.ospf2.lsa2 -obj_type device.ospfv2.netsummarylsa -args_value {-start_ip 2.0.0.1 -ip_count 100}
