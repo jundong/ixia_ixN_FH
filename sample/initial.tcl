@@ -82,9 +82,9 @@ IxDebugOn
 ::IxiaFH::traffic_create -name streamblock2 -port port1 -rxport port2 -cvlanid 100
 ::IxiaFH::traffic_config -name streamblock2 -framesize_fix 1280
 #catch { ::IxiaFH::traffic_start -streamblock {streamblock1 streamblock2} }
-::IxiaFH::traffic_start -arp 1
+#::IxiaFH::traffic_start -arp 1
 #catch { ::IxiaFH::traffic_start }
-::IxiaFH::traffic_create -name streamblock4 -port port1 -rxport {port2 port3}
+#::IxiaFH::traffic_create -name streamblock4 -port port1 -rxport {port2 port3}
 # ::IxiaFH::traffic_create -name port1_port2_1 -port port1 -srcbinding device1 -dstbinding device2
 # ::IxiaFH::traffic_create -name port2_port1_1 -port port2 -srcbinding device2 -dstbinding device1
 # ::IxiaFH::traffic_create -name port1_port2_2 -port port1 -srcbinding device3 -dstbinding ospf2
@@ -107,7 +107,10 @@ IxDebugOn
 # ::IxiaFH::traffic_create -name port2_port1_7_1 -port port2 -srcbinding bgprouteblock2 -dstbinding bgprouteblock1
 
 
-
+ ::IxiaFH::device_create -port port1 -name device31 -obj_type device -args_value "-router_id 192.0.0.5 -src_mac 00:00:01:00:02:01 -ipv6_address 2003::10 -ipv6_gateway 2003::20"
+# ::IxiaFH::device_create -port port2 -name device32 -obj_type device -args_value "-router_id 192.0.0.6 -src_mac 00:00:01:00:02:02 -ipv6_address 2003::20 -ipv6_gateway 2003::10"
+ ::IxiaFH::device_create -name device31.bgp4plus1 -obj_type device.bgp -args_value "-as_num 100 -dut_as 100 -dut_ipv6_addr 2003::20"
+ 
 ::IxiaFH::device_create -port port1 -name device11 -obj_type device -args_value "-router_id 192.0.0.1 -src_mac 00:00:01:00:00:01 -ipv6_address 2001::10 -ipv6_gateway 2001::20 -ipv6_link_local_address fe80::123:456:789:abc"
 # ::IxiaFH::device_create -port port2 -name device12 -obj_type device -args_value "-router_id 192.0.0.2 -src_mac 00:00:01:00:00:02 -ipv6_address 2001::20 -ipv6_gateway 2001::10"
 ::IxiaFH::device_create -name device11.Ospfv3Router1 -obj_type device.ospfv3 
@@ -130,9 +133,9 @@ IxDebugOn
 # ::IxiaFH::device_create -name device22.isisv6_2.isisv6_lsp2.isisv6routeblock4 -obj_type device.isis.isis_lsp.isis_ipv6route -args_value {-start_ip 2070::1 -route_count 100}
 
 
-# ::IxiaFH::device_create -port port1 -name device31 -obj_type device -args_value "-router_id 192.0.0.5 -src_mac 00:00:01:00:02:01 -ipv6_address 2003::10 -ipv6_gateway 2003::20"
+ #::IxiaFH::device_create -port port1 -name device31 -obj_type device -args_value "-router_id 192.0.0.5 -src_mac 00:00:01:00:02:01 -ipv6_address 2003::10 -ipv6_gateway 2003::20"
 # ::IxiaFH::device_create -port port2 -name device32 -obj_type device -args_value "-router_id 192.0.0.6 -src_mac 00:00:01:00:02:02 -ipv6_address 2003::20 -ipv6_gateway 2003::10"
-# ::IxiaFH::device_create -name device31.bgp4plus1 -obj_type device.bgp -args_value "-as_num 100 -dut_as 100 -dut_ip 2003::20"
+ #::IxiaFH::device_create -name device31.bgp4plus1 -obj_type device.bgp -args_value "-as_num 100 -dut_as 100 -dut_ip 2003::20"
 # ::IxiaFH::device_create -name device31.bgp4plus1.bgpv6routeblock1 -obj_type device.bgp.bgp_ipv6route -args_value {-start_ip 2080::1 -route_count 100}
 # ::IxiaFH::device_create -name device32.bgp4plus2 -obj_type device.bgp -args_value {-as_num 100 -dut_as 100 -dut_ip 2003::10}
 # ::IxiaFH::device_create -name device32.bgp4plus2.bgpv6routeblock2 -obj_type device.bgp.bgp_ipv6route -args_value {-start_ip 2090::1 -route_count 100}

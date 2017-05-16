@@ -2281,9 +2281,9 @@ Deputs "----- TAG: $tag -----"
 
 body Flow::get_stats { args } {
 
-set tag "body Flow::get_stats [info script]"
-Deputs "----- TAG: $tag -----"
-# param collection --
+    set tag "body Flow::get_stats [info script]"
+    Deputs "----- TAG: $tag -----"
+    # param collection --
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {
@@ -2296,9 +2296,9 @@ Deputs "----- TAG: $tag -----"
    
 	set view {::ixNet::OBJ-/statistics/view:"Flow Statistics"}
     
-Deputs "view:$view"
+    Deputs "view:$view"
     set captionList             [ ixNet getA $view/page -columnCaptions ]
-Deputs "caption list:$captionList"
+    Deputs "caption list:$captionList"
     set traNameIndex            [ lsearch -exact $captionList {Flow Group} ]
     set txFramesIndex           [ lsearch -exact $captionList {Tx Frames} ]
     set rxFramesIndex           [ lsearch -exact $captionList {Rx Frames} ]

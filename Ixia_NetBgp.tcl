@@ -10,45 +10,47 @@
 class BgpSession {
     inherit RouterEmulationObject
     public variable password
+    public variable hInter
     
     constructor { port { pHandle null } { hInterface null } } {
 		set tag "body BgpSession::ctor [info script]"
         Deputs "----- TAG: $tag -----"
         
+        set handle ""
         set password "fiberhome"
         set routeBlock(obj) [ list ]
         set protocolhandle ""
-
+        set hInter $hInterface
+        
 		set portObj [ GetObject $port ]
         if { $pHandle != "null" } {
             set handle $pHandle
-            
-        } else {
-		    reborn $hInterface
-        }
-        
+        } 
+		if { [ catch {
+			set hPort   [ $portObj cget -handle ]
+		} ] } {
+			error "$errNumber(1) Port Object in BgpSession ctor"
+		}		
+		
         set protocol "bgp"
         set protocolhandle "$hPort/protocols/bgp"
 	}
 	
-	method reborn { { hInterface null }} {
+	method reborn { {ip_version ipv4 } } {
 		global errNumber
 		
 		set tag "body BgpSession::reborn [info script]"
         Deputs "----- TAG: $tag -----"
-
-		if { [ catch {
-			set hPort   [ $portObj cget -handle ]
-		} ] } {
-			error "$errNumber(1) Port Object in DhcpHost ctor"
-		}		
-		
 		ixNet setA $hPort/protocols/bgp -enabled True
-			
 		#-- add bgp protocol
 		set handle [ ixNet add $hPort/protocols/bgp neighborRange ]
 		ixNet commit
 		set handle [ ixNet remapIds $handle ]
+        if { $ip_version == "ipv6" } {
+            ixNet setM $handle \
+                -dutIpAddress 0:0:0:0:0:0:0:0 \
+                -localIpAddress 0:0:0:0:0:0:0:0
+        }
 		ixNet setA $handle \
 			-name $this \
 			-enabled True
@@ -66,16 +68,15 @@ class BgpSession {
 				-enabled True
 			ixNet commit
 		}
-		if { $hInterface != "null" } {		    
+		if { $hInter != "null" } {		    
 		} else {
-		    set hInterface [ lindex $interface 0 ]
+		    set hInter [ lindex $interface 0 ]
 		}
 		ixNet setA $handle \
 			-interfaceType "Protocol Interface" \
-			-interfaces $hInterface
+			-interfaces $hInter
 		ixNet commit
-		set interface $hInterface
-
+		set interface $hInter
 	}
     method config { args } {}
 	method enable {} {}
@@ -141,6 +142,9 @@ body BgpSession::config { args } {
 			-ipv4_gw {
 				set ipv4_gw $value
 			}
+            -dut_ipv6_addr {
+                set ipv6_gw $value
+            }
 			-bgp_type -
 			-type {
 			    if {$value == "ebgp"} {
@@ -167,7 +171,7 @@ body BgpSession::config { args } {
     }
 	
 	if { $handle == "" } {
-		reborn
+		reborn $ip_version
 	}
 	
 	if { [ info exists ipv4_addr ] } {
@@ -199,6 +203,9 @@ body BgpSession::config { args } {
     }
     if { [ info exists dut_ip ] } {
     	ixNet setA $handle -dutIpAddress $dut_ip
+    }
+    if { [ info exists ipv6_gw ] } {
+    	ixNet setA $handle -dutIpAddress $ipv6_gw
     }
     if { [ info exists dut_as ] } {
     }
@@ -238,7 +245,6 @@ body BgpSession::config { args } {
 }
 
 body BgpSession::set_route { args } {
-
     global errorInfo
     global errNumber
     set tag "body BgpSession::set_route [info script]"

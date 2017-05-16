@@ -4,7 +4,7 @@ lappend auto_path {C:\Ixia\Workspace\ixia_ixN_FH}
 package req IxiaFH
 Login
 #IxDebugOn
-IxDebugOff
+IxDebugOn
 ::IxiaFH::port_create -name i1_d1_1 
 ::IxiaFH::port_create -name i1_d2_1 
 
@@ -14,7 +14,8 @@ IxDebugOff
 #::IxiaFH::port_modify -port i1_d1_1 -media copper -speed 1g 
 #::IxiaFH::port_modify -port i1_d2_1 -media copper -speed 1g 
 
-::IxiaFH::device_create -name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:01 }
+#::IxiaFH::device_create -name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:01 }
+::IxiaFH::device_create -name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -ipv4_gateway 1.1.1.10 -ipv4_address 1.1.1.1 }
 ::IxiaFH::device_create -name i1p2_demk -port i1_d2_1 -obj_type device -args_value { -src_mac 00:10:94:00:00:02 }
 
 ::IxiaFH::traffic_create -name i1p1_s -port i1_d1_1 \

@@ -1458,7 +1458,6 @@ namespace eval IxiaFH {
                         lappend flowlist $fhandle
                         traffic_config -name $name -srcmac 00:00:94:00:00:02 -dstmac 00:00:01:00:00:01 -srcip 192.85.1.2  -dstip 192.0.0.1 
 					}
-		   
 				}
 			} else {
 			    Traffic $tname $portn 
@@ -1528,6 +1527,10 @@ namespace eval IxiaFH {
             switch -exact -- $obj_type {
 			    device {
 				    Host $hostName $portn
+                    $hostName config -device_count 1
+                        #-src_mac 00:10:94:00:00:01 \
+                        #-src_mac_step 00:00:00:00:00:01
+                        
 					lappend hostlist $hostName
 					if { $flag ==0 } {
 						$hostName config -count 1
@@ -1732,20 +1735,25 @@ namespace eval IxiaFH {
 					$UpDevice set_route -route_block $lastName
 				}
 				device.bgp {				 				
-					set bgpInt     [ $hostName cget -handle    ]
+					set bgpInt     [ $hostName cget -handle ]
 					set bgpID      [ $hostName cget -ipv4Addr  ]	
 					set session [ lindex [split $name "."] 1 ]
 					set session [ ::IxiaFH::nstype $session  ] 
 					puts "session:$session"
 					$hostName SetSession $session
-				    BgpSession $lastName $portn "null" $bgpInt
+                    if { [regexp {dut_ipv6_addr} $arg] } {
+                        set ip_version ipv6
+                    } else {
+                        set ip_version ipv4
+                    }
+                    BgpSession $lastName $portn "null" $bgpInt
 					$lastName config  -bgp_id $bgpID \
                         -as_num 1 \
                         -active 0 \
 					    -bgp_type "ebgp" \
                         -hold_time 90 \
-                        -dut_ip 192.1.1.1 \
                         -keep_time 30 \
+                        -ip_version $ip_version \
                         -authentication none \
                         -password fiberhome
                         
@@ -1920,7 +1928,6 @@ namespace eval IxiaFH {
 				}
 				set dname [::IxiaFH::nstype $name]
 				set obj_type [ string tolower $obj_type]
-                puts "-------------------$obj_type"
 				switch -exact -- $obj_type {
 					device {
 						eval $dname config $args_value_pairs						
