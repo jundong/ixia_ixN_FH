@@ -821,6 +821,10 @@ body Traffic::config { args  } {
                 if { [ $srcObj isa Port ] } {
                     Deputs Step110
                     set srcHandle [ concat $srcHandle "[ $srcObj cget -handle ]/protocols" ]
+                } elseif { [ $srcObj isa RouteBlock ] } {
+                    Deputs "route block:$srcObj"
+                    set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
+                    set trafficType [ $srcObj cget -type ]
                 } else {
                     Deputs Step120
                     set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
@@ -851,6 +855,10 @@ body Traffic::config { args  } {
                 if { [ $dstObj isa Port ] } {
                     Deputs Step130
                     set dstHandle [ concat $dstHandle "[ $dstObj cget -handle ]/protocols" ]
+                } elseif { [ $srcObj isa RouteBlock ] } {
+                    Deputs "route block:$srcObj"
+                    set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
+                    set trafficType [ $dstObj cget -type ]
                 } else {
                     set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
                     catch {

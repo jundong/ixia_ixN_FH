@@ -3,8 +3,8 @@
 lappend auto_path {C:\Ixia\Workspace\ixia_ixN_FH}
 package req IxiaFH
 Login
-#IxDebugOn
-IxDebugOff
+IxDebugOn
+#IxDebugOff
 #Port @tester_to_dta1 NULL NULL ::ixNet::OBJ-/vport:1
 #Port @tester_to_dta2 NULL NULL ::ixNet::OBJ-/vport:2
 
@@ -23,17 +23,23 @@ IxDebugOff
 ::IxiaFH::device_create -name i1p1_ka.isis1.lsp1 -port i1_d1_1 -obj_type device.isis.isis_lsp -args_value { -level_type L12}
 ::IxiaFH::device_create -name i1p1_ka.isis1.lsp1.ipv4route1 -port i1_d1_1 -obj_type device.isis.isis_lsp.isis_ipv4route -args_value { -route_count 100}
 ::IxiaFH::device_config -name i1p1_ka.isis1 -port i1_d1_1 -obj_type device.isis -args_value { -hello_interval 12 -dead_interval 29 -isis_authentication simple}
-::IxiaFH::device_start -device {i1p1_ka}
+#::IxiaFH::device_start -device {i1p1_ka}
+::IxiaFH::device_create -name i1p2_demk.isis2 -port i1_d2_1 -obj_type device.isis -args_value { -level_type L12 }
+::IxiaFH::device_create -name i1p2_demk.isis2.lsp2 -port i1_d1_1 -obj_type device.isis.isis_lsp -args_value { -level_type L12}
+::IxiaFH::device_create -name i1p2_demk.isis2.lsp2.ipv4route2 -port i1_d1_1 -obj_type device.isis.isis_lsp.isis_ipv4route -args_value { -route_count 100}
+::IxiaFH::device_config -name i1p2_demk.isis2 -port i1_d1_1 -obj_type device.isis -args_value { -hello_interval 12 -dead_interval 29}
 
 # IPv6 part
 ::IxiaFH::device_create -name i1p1_ka.isis6-1 -port i1_d1_1 -obj_type device.isis
 ::IxiaFH::device_create -name i1p1_ka.isis6-1.lsp6-1 -port i1_d1_1 -obj_type device.isis.isis_lsp -args_value { -level_type L12}
 ::IxiaFH::device_create -name i1p1_ka.isis6-1.lsp6-1.ipv6route1 -port i1_d1_1 -obj_type device.isis.isis_lsp.isis_ipv6route -args_value { -route_count 100}
 
-::IxiaFH::device_create -name i1p2_demk.isis2 -port i1_d2_1 -obj_type device.isis -args_value { -level_type L12 }
-::IxiaFH::device_create -name i1p2_demk.isis2.lsp2 -port i1_d1_1 -obj_type device.isis.isis_lsp -args_value { -level_type L12}
-::IxiaFH::device_create -name i1p2_demk.isis2.lsp2.ipv4route2 -port i1_d1_1 -obj_type device.isis.isis_lsp.isis_ipv4route -args_value { -route_count 100}
-::IxiaFH::device_config -name i1p2_demk.isis2 -port i1_d1_1 -obj_type device.isis -args_value { -hello_interval 12 -dead_interval 29}
+::IxiaFH::device_create -name i1p2_demk.isis6-2 -port i1_d2_1 -obj_type device.isis
+::IxiaFH::device_create -name i1p2_demk.isis6-2.lsp6-2 -port i1_d2_1 -obj_type device.isis.isis_lsp -args_value { -level_type L12}
+::IxiaFH::device_create -name i1p2_demk.isis6-2.lsp6-2.ipv6route2 -port i1_d2_1 -obj_type device.isis.isis_lsp.isis_ipv6route -args_value { -route_count 100}
+
+::IxiaFH::traffic_create -name port1_port2_isis1 -port i1_d1_1
+::IxiaFH::traffic_config -name port1_port2_isis1 -port i1_d1_1 -srcbinding ipv6route1 -dstbinding ipv6route2
 
 ::IxiaFH::traffic_create -name raw_1_1 -port i1_d1_1 -rxport i1_d2_1 -srcip 1.1.1.1 -dstip 2.2.2.2 -cvlanid 100
 

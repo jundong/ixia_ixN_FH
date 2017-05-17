@@ -35,10 +35,10 @@ set trafficinfo {}
 set loadflag 0
 set deviceList [list]
 
-namespace eval IxiaFH {
-   namespace export *
-   
-} ;
+#namespace eval IxiaFH {
+#   namespace export *
+#   
+#} ;
 
 namespace eval IxiaFH {
 	proc Logto { args } {
@@ -1641,8 +1641,10 @@ namespace eval IxiaFH {
 					set origin sameArea
 					$UpDevice set_route -route_block $lastName -origin $origin	
 				}
-                ospfv3.externalsa -
-				device.ospfv3.externalsa {
+				ospfv3.externalsa -
+				device.ospfv3.externalsa -
+                ospfv3.ospfv3_externalsa -
+				device.ospfv3.ospfv3_externalsa {
 					set UpDevice [ lindex [split $name "."] 1 ]
 					set UpDevice [ ::IxiaFH::nstype $UpDevice   ]
 					puts "UpDevice:$UpDevice"
@@ -1704,6 +1706,7 @@ namespace eval IxiaFH {
 					
 					lappend deviceList $lastName
 				}
+				isis.isis_lsp.isis_ipv4route -
 				device.isis.isis_lsp.isis_ipv4route {
 					set UpDevice [ lindex [split $name "."] 1 ]
 					set UpDevice [ ::IxiaFH::nstype $UpDevice   ]
@@ -1719,6 +1722,7 @@ namespace eval IxiaFH {
                     
 					$UpDevice set_route -route_block $lastName
 				}
+				isis.isis_lsp.isis_ipv6route -
 				device.isis.isis_lsp.isis_ipv6route {
 					set UpDevice [ lindex [split $name "."] 1 ]
 					set UpDevice [ ::IxiaFH::nstype $UpDevice   ]
@@ -1967,7 +1971,8 @@ namespace eval IxiaFH {
 						set origin sameArea
 						$UpDevice set_route -route_block $dname -origin $origin				
 					}
-					device.ospfv3.externalsa {
+					device.ospfv3.externalsa -
+					device.ospfv3.ospfv3_externalsa {
 						eval $dname config $args_value_pairs
 						set UpDevice [ $dname cget -up_device ]
 						puts "UpDevice:$UpDevice"
@@ -1984,8 +1989,10 @@ namespace eval IxiaFH {
 						
 					}
 					isis_ipv4route -
+					isis.isis_lsp.isis_ipv4route -
 					device.isis.isis_lsp.isis_ipv4route -
 					isis_ipv6route -
+					isis.isis_lsp.isis_ipv6route -
 					device.isis.isis_lsp.isis_ipv6route {
 						eval $dname config $args_value_pairs
 						set UpDevice [ $dname cget -up_device ]
@@ -5990,7 +5997,7 @@ namespace eval IxiaFH {
 package provide IxiaFH $FHreleaseVersion
 puts "package require success on version $FHreleaseVersion"
 
-namespace import IxiaFH::*
+#namespace import IxiaFH::*
 
 
 

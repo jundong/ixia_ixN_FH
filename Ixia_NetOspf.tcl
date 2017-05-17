@@ -468,8 +468,9 @@ body OspfSession::config { args } {
         }
     }
 	ixNet setA $handle -enabled True
-	puts "handle:$handle"
+    Deputs "handle:$handle"
 	if { [ info exists graceful_restart ] } {
+        Deputs "graceful_restart:$graceful_restart"
 		if { $graceful_restart } {
 			ixNet setA $handle -gracefulRestart true
 		} else {
@@ -479,11 +480,13 @@ body OspfSession::config { args } {
 	}
 
 	if { [ info exists router_id ] } {
+        Deputs "router_id:$router_id"
 		ixNet setA $handle -routerId $router_id
 		ixNet commit
 	}
 
 	if { [ info exists area_id ] } {
+        Deputs "area_id:$area_id"
 		set id_hex [IP2Hex $area_id]			
 		set area_id [format %i 0x$id_hex]
 		set intf [ixNet getL $handle interface]
@@ -496,18 +499,21 @@ body OspfSession::config { args } {
 	}
 
 	if { [ info exists hello_interval ] } {
+        Deputs "hello_interval:$hello_interval"
 		set intf [ixNet getL $handle interface]
 		ixNet setA $intf -helloInterval $hello_interval	
 		ixNet commit
 	}
 
 	if { [ info exists instance_id ] } {
+        Deputs "instance_id:$instance_id"
 		set intf [ixNet getL $handle interface]
 		ixNet setA $intf -instanceId $instance_id
 		ixNet commit
 	}
 
-	if { [ info exists if_cost ] } {	
+	if { [ info exists if_cost ] } {
+        Deputs "if_cost:$if_cost"
 		set intf [ixNet getL $handle interface]
         if { $protocol == "ospf" } {
             ixNet setA $intf -metric $if_cost
@@ -520,6 +526,7 @@ body OspfSession::config { args } {
 	# v3 -interfaceType pointToPoint, -interfaceType broadcast
 	# v2 -networkType pointToPoint, -networkType broadcast, -networkType pointToMultipoint
 	if { [ info exists network_type ] } {
+        Deputs "network_type:$network_type"
 		set intf [ixNet getL $handle interface]
         if { $protocol == "ospf"  } {
             ixNet setA $intf -networkType $network_type
@@ -531,7 +538,8 @@ body OspfSession::config { args } {
 
 	# v3 -routerOptions
 	# v2 -options
-	if { [ info exists options ] } { 
+	if { [ info exists options ] } {
+        Deputs "options:$options"
 		set options [split $options |]
 		if {[string match *dcbit* $options]} {
 		set dcbit 1
@@ -572,6 +580,7 @@ body OspfSession::config { args } {
 	}
 
 	if { [ info exists dead_interval ] } {
+        Deputs "dead_interval:$dead_interval"
 		set intf [ixNet getL $handle interface]
 		ixNet setA $intf -deadInterval $dead_interval
 		ixNet commit
@@ -580,18 +589,21 @@ body OspfSession::config { args } {
 	# v3 
 	# v2 -lsaRetransmitTime
 	if { [ info exists retransmit_interval ] } {
+        Deputs "retransmit_interval:$retransmit_interval"
 		set intf [ixNet getL $handle interface]
 		ixNet setA $intf -lsaRetransmitTime $retransmit_interval
 		ixNet commit
 	}
 
 	if { [ info exists priority ] } {
+        Deputs "network_type:$network_type"
 		set intf [ixNet getL $handle interface]
 		ixNet setA $intf -priority $priority
 		ixNet commit
 	}
 
 	if { [ info exists authentication ] } {
+        Deputs "authentication:$authentication"
 		set intf [ixNet getL $handle interface]
 		if { $authentication == "md5" } {
 			ixNet setA $intf -authenticationMethods md5

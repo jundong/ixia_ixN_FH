@@ -19,7 +19,7 @@ IxDebugOff
 ::IxiaFH::device_create -name i1p1_ka -port i1_d1_1 -obj_type device -args_value { -ipv6_address 2000::2 -ipv6_gateway 2000::20 -src_mac 00:10:94:00:00:01 }
 ::IxiaFH::device_create -name i1p2_demk -port i1_d2_1 -obj_type device -args_value { -ipv6_address 2000::20 -ipv6_gateway 2000::2 -src_mac 00:10:94:00:00:02 }
 
-::IxiaFH::device_create -name i1p1_ka.ospfv1 -port i1_d1_1 -obj_type device.ospfv3 -args_value { -instance_id 100 -option 13 }
+::IxiaFH::device_create -name i1p1_ka.ospfv1 -port i1_d1_1 -obj_type device.ospfv3 -args_value { -instance_id 100 -option 13 -network_type p2p -area_id 0.0.0.1 }
 ::IxiaFH::device_create -name i1p2_demk.ospfv2 -port i1_d2_1 -obj_type device.ospfv3 -args_value { -instance_id 110 }
 
 ::IxiaFH::device_create -name i1p1_ka.ospfv1.externalsa1 -port i1_d1_1 -obj_type device.ospfv3.externalsa -args_value "-start_address 2030::1 -route_count 100 -metric_lsa 100"

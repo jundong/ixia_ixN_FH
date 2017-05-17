@@ -2043,11 +2043,15 @@ body Host::config { args } {
                         ixNet commit
                         #ixNet setA $int/ethernet -macAddress 00:10:94:00:00:01
                         #ixNet commit
+                        if { $ipv4Addr == "" } {
+                            set ipv4Addr 192.85.1.3
+                        }
 					}
                     if { [ info exists ipv4_addr ] } {
                         Deputs "config ipv4 address"
                         ixNet setA $int/ipv4 -ip $ipv4_addr 
                         ixNet commit
+                        set ipv4Addr $ipv4_addr
                     }
 
                     if { [ info exists ipv4_addr_step ] } {
@@ -2066,8 +2070,8 @@ body Host::config { args } {
 				}
                 
 				if { [ info exists ipv4_prefix_len ] } {
-                    Deputs "config ipv4 prefix length"
-					ixNet setA [ ixNet getL $int ipv4 ] -prefixLength $ipv4_prefix_len
+                    Deputs "config ipv4 prefix length: $ipv4_prefix_len"
+					ixNet setA [ ixNet getL $int ipv4 ] -maskWidth $ipv4_prefix_len
 					ixNet commit
 				}
                 
@@ -2082,6 +2086,9 @@ body Host::config { args } {
                         ixNet commit
                         #ixNet setA $int/ethernet -macAddress 00:10:94:00:00:01
                         #ixNet commit
+                        if { $ipv4Addr == "" } {
+                            set ipv4Addr 192.85.1.3
+                        }
 					}
                     Deputs "IPv6 Addr: $ipv6_addr "
                     Deputs "int/ipv6: [ ixNet getL $int ipv6 ]"
