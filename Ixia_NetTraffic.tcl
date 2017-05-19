@@ -825,11 +825,24 @@ body Traffic::config { args  } {
                     Deputs "route block:$srcObj"
                     set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
                     set trafficType [ $srcObj cget -type ]
+                } elseif { [ $srcObj isa Host ] } {
+                    set hdl [ $srcObj cget -handle ]
+                    if { [string tolower $trafficType] == "l2" } {
+						set trafficType ethernetVlan
+					}
+                    catch {
+                        if { [llength [ixNet getL $hdl ipv4]] != 0 } {
+                            set trafficType ipv4
+                        } elseif { [llength [ixNet getL $hdl ipv6]] != 0 } {
+                            set trafficType ipv6
+                        }
+                    }
+                    set srcHandle [ concat $srcHandle $hdl ]
                 } else {
                     Deputs Step120
                     set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
                     catch {
-                        if { [ llength [ ixNet getL $dstHandle ipv6 ] ] > 0 } {
+                        if { [ llength [ ixNet getL $srcHandle ipv6 ] ] > 0 } {
                             set trafficType ipv6
                         }
                     }
@@ -855,10 +868,23 @@ body Traffic::config { args  } {
                 if { [ $dstObj isa Port ] } {
                     Deputs Step130
                     set dstHandle [ concat $dstHandle "[ $dstObj cget -handle ]/protocols" ]
-                } elseif { [ $srcObj isa RouteBlock ] } {
-                    Deputs "route block:$srcObj"
+                } elseif { [ $dstObj isa RouteBlock ] } {
+                    Deputs "route block:$dstObj"
                     set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
                     set trafficType [ $dstObj cget -type ]
+                } elseif { [ $dstObj isa Host ] } {
+                    set hdl [ $dstObj cget -handle ]
+                    if { [string tolower $trafficType] == "l2" } {
+						set trafficType ethernetVlan
+					}
+                    catch {
+                        if { [llength [ixNet getL $hdl ipv4]] != 0 } {
+                            set trafficType ipv4
+                        } elseif { [llength [ixNet getL $hdl ipv6]] != 0 } {
+                            set trafficType ipv6
+                        }
+                    }
+                    set dstHandle [ concat $dstHandle $hdl ]
                 } else {
                     set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
                     catch {

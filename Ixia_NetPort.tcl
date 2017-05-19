@@ -1855,7 +1855,8 @@ body Host::config { args } {
             -src_mac_step {
 				set src_mac_step $value
             }
-			-cvlan_id -
+			-cvlan -
+            -cvlan_id -
             -vlan_id1 -
 			-outer_vlan_id {
 				set vlan_id1 $value
@@ -1967,18 +1968,19 @@ body Host::config { args } {
 				} else {
 					set vlanIncrMode noIncrement
 				}
+                Deputs "Handle: $handle, Vlan ID: $vlan_id1"
 				ixNet setM $handle -enableVlan True \
 					-enableIncrementVlan $enableVlanIncr \
 					-incremetVlanMode $vlanIncrMode
 				if { [ info exists vlan_id2 ] } {
 					ixNet setM $handle \
 						-vlanCount 2 \
-						-vlanId "${vlan_id1},${vlan_id2}"
+						-vlanId "${vlan_id1},${vlan_id2}" \
 						-vlanPriority "${vlan_pri1},${vlan_pri2}"
 				} else {
 					ixNet setM $handle \
 						-vlanCount 1 \
-						-vlanId $vlan_id1
+						-vlanId $vlan_id1 \
 						-vlanPriority $vlan_pri1
 				}
 			} 
@@ -2043,7 +2045,7 @@ body Host::config { args } {
                         ixNet commit
                         #ixNet setA $int/ethernet -macAddress 00:10:94:00:00:01
                         #ixNet commit
-                        if { $ipv4Addr == "" } {
+                            if { $ipv4Addr == "" } {
                             set ipv4Addr 192.85.1.3
                         }
 					}
@@ -2051,7 +2053,6 @@ body Host::config { args } {
                         Deputs "config ipv4 address"
                         ixNet setA $int/ipv4 -ip $ipv4_addr 
                         ixNet commit
-                        set ipv4Addr $ipv4_addr
                     }
 
                     if { [ info exists ipv4_addr_step ] } {

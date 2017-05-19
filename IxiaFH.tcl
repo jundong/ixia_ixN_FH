@@ -1527,14 +1527,14 @@ namespace eval IxiaFH {
             switch -exact -- $obj_type {
 			    device {
 				    Host $hostName $portn
-                    $hostName config -device_count 1
+                    #$hostName config -device_count 1
                         #-src_mac 00:10:94:00:00:01 \
                         #-src_mac_step 00:00:00:00:00:01
                         
 					lappend hostlist $hostName
-					if { $flag ==0 } {
-						$hostName config -count 1
-					}
+					#if { $flag ==0 } {
+					#	$hostName config -count 1
+					#}
 				}
                 ospfv2 -
 				device.ospfv2 {
@@ -2073,7 +2073,6 @@ namespace eval IxiaFH {
 				} else {
 					access_protocol_handle -port $portname -device $obj_name -protocoltype $protocoltype 
 				}
-                puts "ssss****************$obj_name"
 				foreach { key value } $args_value_pairs {
 					set key [string tolower $key]
 					switch -exact -- $key {
@@ -2737,7 +2736,11 @@ namespace eval IxiaFH {
                     Logto -msg "Destination binding object is not exist: $dstbinding" -level "error"
                     error "Destination binding object is not exist: $dstbinding"
                 }
-				$streamobj config -src $srcbinding -dst $dstbinding
+				if { [info exists bindinglevel] } {
+					$streamobj config -src $srcbinding -dst $dstbinding -traffic_type $bindinglevel
+				} else {
+					$streamobj config -src $srcbinding -dst $dstbinding
+				}
 				set thandle [$streamobj cget -handle]
 				Deputs "thandle: $thandle"
 				foreach fhandle [ixNet getL $thandle highLevelStream ] {
@@ -4150,179 +4153,7 @@ namespace eval IxiaFH {
 	}	
 	
     
-    proc device_config_old { args } {
-		set tag "device_config "
-		Logto -info "----- TAG: $tag -----"
-        Logto -info "args: $args"
-		global deviceList
-        global errNumber		
-		foreach { key value } $args {
-			set key [string tolower $key]
-			switch -exact -- $key {
-				-obj_name {
-					set obj_name $value
-                        
-				}
-				-obj_type {
-					set obj_type $value
-                        
-				}
-				-args_value_pairs {
-					set args_value $value
-                        
-				}
-				default {
-                    Logto -msg "$errNumber(3) key:$key value:$value" -level "error"
-					error "$errNumber(3) key:$key value:$value"
-				}
-			}
-		}
-        set devicelist   [ split $obj_name  _ ]
-        set portname     [ lindex $devicelist 0 ]
-        set protocoltype [ lindex $devicelist 1 ]
-        set EPType { dhcp pppoe igmp dhcpserver bgp isis ospf}
-        set protocoltype [string tolower $obj_type]
-        foreach ptype $EPType {
-            if { [regexp ^$ptype.* $protocoltype] } {               
-                set protocoltype $ptype
-                Logto -info "protocol type $ptype"
-                break
-            }
-            
-        }
-        if { $protocoltype == "bgp" || $protocoltype == "isis" || $protocoltype == "ospf" ||$protocoltype == "igmp"} {
-            protocol_handle  -device $device -protocoltype $protocoltype
-        } else {
-        
-            access_protocol_handle -port $portname -device $obj_name -protocoltype $protocoltype 
-        }
-        foreach { key value } $args_value {
-			set key [string tolower $key]
-			switch -exact -- $key {
-				-src_mac {
-					$obj_name config -mac_addr $value
-                        
-				}
-				-dst_mac {					                       
-				}
-				-vlan {
-					$obj_name config -vlan_id1 $value                        
-				}
-                -src_ip {
-                    if {$protocoltype == "igmp" } {
-                        $obj_name config -ipaddr $value
-                    }                    
-				}
-				-gateway_ip {
-					                        
-				}
-				-ospf_area_id {
-					$obj_name config  -area_id $value
-                        
-				}
-				-ospf_network_type {
-					$obj_name config  -network_type $value
-                        
-				}
-				-isis_system_id {
-					$obj_name config  -system_id $value
-                        
-				}
-                -level_type -
-				-isis_level {
-				    if { $value == 0 } {
-					    set value "L2"
-					} elseif { $value == 1 } {
-					    set value "L1"
-					} elseif { $value == 2 } {
-					    set value "L12"
-					}
-					$obj_name config  -level_type $value
-                        
-				}
-				-isis_network_type {
-					$obj_name config  -network_type $value
-                        
-				}
-				-isis_metric_mode {
-					$obj_name config  -metric $value
-                        
-				}
-				-bgp_mode {
-				    if { $value == 0 } {
-					    set value "external"
-					} elseif { $value == 1 } {
-					    set value "internal"
-					}
-					$obj_name config  -type $value
-                        
-				}
-				-bgp_dut_as {
-					$obj_name config  -dut_as $value
-                        
-				}
-				-bgp_local_as {
-					$obj_name config  -as $value
-                        
-				}
-				-dhcp_pool_address_start {
-					$obj_name config  -pool_ip_start $value
-                        
-				}
-                -dhcp_pool_host_address_start {
-					$obj_name config  -pool_ip_pfx $value
-                        
-				}
-                -dhcp_pool_address_count {
-					$obj_name config  -pool_ip_count $value
-                        
-				}
-                -dhcp_enable_broadcast_flag {
-					$obj_name config  -use_broadcast_flag $value
-                        
-				}
-                -pppoe_auth {
-					$obj_name config  -authentication $value
-                        
-				}
-                -pppoe_usename {
-					$obj_name config  -user_name $value
-                        
-				}
-                -pppoe_password {
-					$obj_name config  -password $value
-                        
-				}
-                -multicast_version {
-					$obj_name config  -version $value
-                        
-				}
-                -igmp_start_group_ip {
-					$obj_name config  -ipaddr $value
-                        
-				} 
-                -igmp_group_step {
-					$obj_name config  -ipaddr_step $value
-                        
-				}
-                -igmp_group_num {
-					$obj_name config  -count $value
-                        
-				} 
-                -pim_mode {
-					$obj_name config  -pim_mode $value
-                        
-				}
-                -pim_role {
-					$obj_name config  -pim_role $value
-                        
-				}                
-			}
-		}		   
-		return 1
-	}
-	
-	proc dhcp_client_bind { args } {
+    proc dhcp_client_bind { args } {
 		set tag "dhcp_client_bind "
 		Logto -info "----- TAG: $tag -----"
 		global deviceList
