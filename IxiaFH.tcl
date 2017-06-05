@@ -1840,12 +1840,24 @@ namespace eval IxiaFH {
 				device.igmp {
 				    set igmpInt     [ $hostName cget -handle    ]										
 				    IgmpHost $lastName $portn "null" $igmpInt
-					MulticastGroup ${lastName}_group 
-					${lastName}_group SetUpDevice $lastName
-					${lastName}_group config -group_num 1 \
+					$lastName config -active 1 \
+						-version igmpv2 \
+						-force_leave 0 \
+						-force_simple_join 0
+				}
+				device.igmp.igmp_group {
+				    set UpDevice [ lindex [split $name "."] 1 ]
+					set UpDevice [ ::IxiaFH::nstype $UpDevice   ]
+					puts "UpDevice:$UpDevice"
+					
+					MulticastGroup ${lastName}
+					${lastName} SetUpDevice $UpDevice
+					${lastName} config -active 1 \
+						-sourcefilter_mode exclude \
+						-group_num 1 \
 					    -group_start_ip "225.0.0.1" \
-						-group_ip_step "0.0.0.1"
-					$lastName join_group -group ${lastName}_group					
+						-group_ip_step "1"
+					$UpDevice join_group -group ${lastName}					
 				}
 				device.igmp_querier {
 				    set igmpInt     [ $hostName cget -handle    ]										
@@ -1854,13 +1866,25 @@ namespace eval IxiaFH {
 				device.mld {
 				    set mldInt     [ $hostName cget -handle    ]										
 				    MldHost $lastName $portn "null" $mldInt
-					MulticastGroup ${lastName}_group 
-					${lastName}_group SetUpDevice $lastName
-					${lastName}_group config -group_num 1 \
-					    -group_start_ip "ff1e::1" \
-						-group_ip_step "::1"
-					$lastName join_group -group ${lastName}_group
+					$lastName config -active 1 \
+						-version mldv1 \
+						-force_leave 0 \
+						-force_simple_join 0
 					
+				}
+				device.mld.mld_group {
+				    set UpDevice [ lindex [split $name "."] 1 ]
+					set UpDevice [ ::IxiaFH::nstype $UpDevice   ]
+					puts "UpDevice:$UpDevice"
+
+					MulticastGroup ${lastName} 
+					${lastName} SetUpDevice $UpDevice
+					${lastName} config -active 1 \
+						-sourcefilter_mode exclude \
+						-group_num 1 \
+					    -group_start_ip "ff1e::1" \
+						-group_ip_step "1"
+					$UpDevice join_group -group ${lastName}
 				}
 				device.mld_querier {
 				    set mldInt     [ $hostName cget -handle    ]										
@@ -2029,10 +2053,13 @@ namespace eval IxiaFH {
 					}
 					igmp -
 					device.igmp {
-						eval ${dname}_group config $args_value_pairs
-						set UpDevice [ ${dname}_group cget -up_device ]
+						eval ${dname} config $args_value_pairs
+					}
+					device.igmp.igmp_group {
+						eval ${dname} config $args_value_pairs
+						set UpDevice [ ${dname} cget -up_device ]
 						puts "UpDevice:$UpDevice"
-						$UpDevice join_group -group ${dname}_group
+						$UpDevice join_group -group ${dname}
 					}
 					igmp_querier -
 					device.igmp_querier {
@@ -2040,10 +2067,13 @@ namespace eval IxiaFH {
 					}
 					mld -
 					device.mld {
-						eval ${dname}_group config $args_value_pairs
-						set UpDevice [ ${dname}_group cget -up_device ]
+						eval ${dname} config $args_value_pairs
+					}
+					device.mld.mld_group {
+						eval ${dname} config $args_value_pairs
+						set UpDevice [ ${dname} cget -up_device ]
 						puts "UpDevice:$UpDevice"
-						$UpDevice join_group -group ${dname}_group
+						$UpDevice join_group -group ${dname}
 					}
 					mld_querier -
 					device.mld_querier {

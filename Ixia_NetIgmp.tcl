@@ -16,7 +16,7 @@ class IgmpHost {
     method config { args } {}
 	method unconfig {} {
 		set tag "body IgmpHost::unconfig [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		set interface [ list ]
 		set group_list	[ list ]
 		array set group_handle [list]
@@ -50,7 +50,7 @@ body IgmpHost::constructor { port { pHandle null } { hInterface null } } {
     global errNumber
     
     set tag "body IgmpHost::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
     set portObj [ GetObject $port ]
     if { [ catch {
@@ -67,6 +67,7 @@ Deputs "----- TAG: $tag -----"
         set handle $pHandle
     }
 	
+	set protocol igmp
     set count 		1
     set ipaddr_step 	0.0.0.1
     set vlan_id1_step	1
@@ -86,16 +87,19 @@ body IgmpHost::config { args } {
     global errorInfo
     global errNumber
     set tag "body IgmpHost::config [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 	
 	set version "v2"
-#param collection
-Deputs "Args:$args "
+	#param collection
+	Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
             -force_leave {
             	set force_leave $value
+            }
+            -force_simple_join {
+            	set force_simple_join $value
             }
             -force_robust_join {			
             	set force_robust_join $value
@@ -185,8 +189,8 @@ Deputs "Args:$args "
     }
 		
     if { [ info exists ipaddr ] } {
-Deputs "Step10"
-	set ipv4_addr $ipaddr
+		Deputs "Step10"
+		set ipv4_addr $ipaddr
 		set int_cnt [ llength $interface ]
     	if { $int_cnt > 0 && $int_cnt == $count } {
 
@@ -224,7 +228,7 @@ Deputs "Step10"
     }
     
     if { [ info exists vlan_id1 ] } {
-Deputs Step20
+		Deputs Step20
 		set vlanId	$vlan_id1
 		set int_cnt [ llength $interface ]
 		if { $int_cnt > 0 && $int_cnt == $count } {
@@ -239,12 +243,12 @@ Deputs Step20
 			}	
 
     	} else {
-Deputs "Bad count of interface...$int_cnt"
+			Deputs "Bad count of interface...$int_cnt"
     	}
     }
     
     if { [ info exists vlan_id2 ] } {
-Deputs Step30
+		Deputs Step30
 		set int_cnt [ llength $interface ]
 		if { $int_cnt > 0 && $int_cnt == $count } {
 
@@ -262,23 +266,19 @@ Deputs Step30
 				incr vlan_id2 $vlan_id2_step
 			}			
 		} else {
-Deputs "Bad count of interface...$int_cnt"
+			Deputs "Bad count of interface...$int_cnt"
     	}
     }
-
-
 
 	#-- enable igmp emulation
 	ixNet setA $hPort/protocols/igmp -enabled True
 	ixNet commit
 
-Deputs "int len:[ llength $interface ]"	
+	Deputs "int len:[ llength $interface ]"	
 	if { [ llength $interface ] > 0 } {
 		if { $handle == "" } {
 		   foreach int $interface {
-
-				set host [ ixNet add $hPort/protocols/igmp host ]
-				
+				set host [ ixNet add $hPort/protocols/igmp host ]	
 				ixNet setM $host \
 					-interfaceType {Protocol Interface} \
 					-enabled True 
@@ -286,23 +286,22 @@ Deputs "int len:[ llength $interface ]"
 				ixNet commit
 				lappend handle [ixNet remapIds $host]
 
-		Deputs "protocol interface:$int"
+				Deputs "protocol interface:$int"
 				ixNet setA $handle -interfaces $int
 				ixNet commit
 			}
 		}
 	}
 
-
-# -gqResponseMode True \
-# -interfaceIndex 1 \
-# -reportFreq 120 \
-# -respToQueryImmediately False \
-# -routerAlert True \
-# -sqResponseMode True \
-# -suppressReports False \
-# -upResponseMode False \
-# -version igmpv2    
+	# -gqResponseMode True \
+	# -interfaceIndex 1 \
+	# -reportFreq 120 \
+	# -respToQueryImmediately False \
+	# -routerAlert True \
+	# -sqResponseMode True \
+	# -suppressReports False \
+	# -upResponseMode False \
+	# -version igmpv2    
 
 	foreach h $handle {
 		if { [ info exists version ] } {
@@ -340,16 +339,14 @@ Deputs "int len:[ llength $interface ]"
 		ixNet commit
 	}
     	
-	
 	return [ GetStandardReturnHeader ]	
-	
 }
 
 body IgmpHost::join_group { args } {
     global errNumber
     
     set tag "body IgmpHost::join_group [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
     foreach { key value } $args {
         set key [string tolower $key]
@@ -372,33 +369,30 @@ Deputs "----- TAG: $tag -----"
 	
 	if { [ info exists groupList ] } {
 		foreach group $groupList {
-	Deputs Step10
+			Deputs Step10
 			if { [ $group isa MulticastGroup ] == 0 } {
 				return [ GetErrorReturnHeader "Invalid MultcastGroup object... $group" ]
 			}
-	Deputs Step20
+			Deputs Step20
 			set grpIndex [ lsearch $group_list $group ]
 			if { $grpIndex >= 0 } {
-	Deputs Step30
-	           
+				Deputs Step30
 				set group_ip [ $group cget -group_ip ]
 				set group_num [ $group cget -group_num ]
 				set group_step [ $group cget -group_step ]
-				
+				Deputs "************group_step: $group_step"
 				foreach hIgmp $handle {
-
 					set hGroup	$group_handle($group,$hIgmp)
 					ixNet setA $hGroup -enabled True
 					ixNet setM $hGroup \
 						-enabled True \
 						-groupCount $group_num \
 						-groupFrom $group_ip \
-						-incrementStep $incrStep 
-						
+						-incrementStep $group_step 						
 					ixNet commit
 				}
 			} else {
-	Deputs Step40
+				Deputs Step40
 				set filter_mode [ $group cget -filter_mode ]
 				set group_ip [ $group cget -group_ip ]
 				set group_num [ $group cget -group_num ]
@@ -408,8 +402,8 @@ Deputs "----- TAG: $tag -----"
 				set source_num [ $group cget -source_num ]
 				set source_step [ $group cget -source_step ]
 				set source_modbit [ $group cget -source_modbit ]
-	Deputs "=group prop= filter_mode:$filter_mode group_ip:$group_ip group_num:$group_num group_step:$group_step group_modbit:$group_modbit source_ip:$source_ip source_num:$source_num source_step:$source_step source_modbit:$source_modbit"
-	Deputs Step45
+				Deputs "=group prop= filter_mode:$filter_mode group_ip:$group_ip group_num:$group_num group_step:$group_step group_modbit:$group_modbit source_ip:$source_ip source_num:$source_num source_step:$source_step source_modbit:$source_modbit"
+				Deputs Step45
 				foreach hIgmp $handle {
 					set hGroup [ ixNet add $hIgmp group ]
 					set incrStep [ GetPrefixV4Step $group_modbit $group_step ]
@@ -420,14 +414,14 @@ Deputs "----- TAG: $tag -----"
 						-incrementStep $incrStep \
 						-sourceMode $filter_mode
 					ixNet commit
-		Deputs Step50			
-		Deputs "group handle:$hGroup"
-		Deputs "group handle array names: [ array names group_handle ]"
+					Deputs Step50			
+					Deputs "group handle:$hGroup"
+					Deputs "group handle array names: [ array names group_handle ]"
 					set group_handle($group,$hIgmp) $hGroup
-		Deputs Step60
+					Deputs Step60
 					lappend group_list $group
-		Deputs "group handle names:[ array names group_handle ]"
-		Deputs "group list:$group_list"
+					Deputs "group handle names:[ array names group_handle ]"
+					Deputs "group list:$group_list"
 				}			
 			}
 		}
@@ -653,17 +647,17 @@ class MulticastGroup {
 }
 
 body MulticastGroup::config { args } {
-
     global errNumber
     
     set tag "body MulticastGroup::config [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
 	set EFilterMode		[ list include exclude ]
-	
+	Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
+			-sourcefilter_mode -
             -filter_mode {
 				set value [ string tolower $value ]
                 if { [ lsearch -exact $EFilterMode $value ] >= 0 } {
@@ -674,13 +668,13 @@ Deputs "----- TAG: $tag -----"
                 }
             }
             -source_ip {
-Deputs "set ip address...$value"
-			  set source_ip $value
-#                if { [ IsIPv4Address $value ] } {
-#                    set source_ip $value
-#                } else {
-#                    error "$errNumber(1) key:$key value:$value"
-#                }
+				Deputs "set ip address...$value"
+							  set source_ip $value
+				#                if { [ IsIPv4Address $value ] } {
+				#                    set source_ip $value
+				#                } else {
+				#                    error "$errNumber(1) key:$key value:$value"
+				#                }
             }
             -source_num {
                 set trans [ UnitTrans $value ]
@@ -712,7 +706,7 @@ Deputs "set ip address...$value"
             }
 			-group_start_ip -
             -group_ip {
-			  set group_ip $value
+			set group_ip $value
 #                if { [ IsIPv4Address $value ] } {
 #                    set group_ip $value
 #                } else {
@@ -727,7 +721,7 @@ Deputs "set ip address...$value"
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-			-group_ip_setp -
+			-group_ip_step -
             -group_step {
                 if { [ IsIPv4Address $value ] } {
                     set group_step $value
@@ -742,14 +736,31 @@ Deputs "set ip address...$value"
             }
             -group_modbit {
                 set trans [ UnitTrans $value ]
-			  set group_modbit $trans
+				set group_modbit $trans
 #                if { [ string is integer $trans ] && $trans <= 32 && $trans >= 1 } {
 #                    set group_modbit $trans
 #                } else {
 #                    error "$errNumber(1) key:$key value:$value"
 #                }                    
             }
-
+            -sourcefilters {
+				set sourcefilters $value
+            }
+            -user_defined_sources {
+				set user_defined_sources $value
+            }
+            -user_start_ip {
+				set user_start_ip $value
+            }
+            -user_prefix_length {
+				set user_prefix_length $value
+            }
+            -user_numcount {
+				set user_numcount $value
+            }
+            -user_addrincrement {
+				set user_addrincrement $value
+            }
         }
     }	
 
@@ -928,13 +939,13 @@ body IgmpQuerier::config { args } {
     global errorInfo
     global errNumber
     set tag "body IgmpQuerier::config [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
     set version 2
 	set query_interval 125
 	set query_respon_interval 2
 	
-#param collection
-Deputs "Args:$args "
+	#param collection
+	Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -987,20 +998,21 @@ Deputs "int len:[ llength $interface ]"
 		}
 	}
 
-   
-
 	foreach h $handle {
 		if { [ info exists version ] } {
 			switch $version {
 			    1 -
+				igmpv1 -
 				v1 {
 					set ixversion igmpv1
 				}
 				2 -
+				igmpv2 -
 				v2 {
 					set ixversion igmpv2
 				}
 				3 -
+				igmpv3 -
 				v3 {
 					set ixversion igmpv3
 				}
@@ -1045,7 +1057,7 @@ body MldHost::constructor { port { pHandle null } { hInterface null } } {
     global errNumber
     
     set tag "body MldHost::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
     set portObj [ GetObject $port ]
     if { [ catch {
@@ -1062,6 +1074,7 @@ Deputs "----- TAG: $tag -----"
         set handle $pHandle
     }
 	
+	set protocol mld
     set count 		1
     set ipaddr_step 	0.0.0.1
     set vlan_id1_step	1
@@ -1079,7 +1092,7 @@ Deputs "----- TAG: $tag -----"
 	# global errNumber
 	# set portObj [ GetObject $port ]
 	# set tag "body MldHost::ctor [info script]"
-# Deputs "----- TAG: $tag -----"
+	# Deputs "----- TAG: $tag -----"
 	# if { [ catch {
 		# set hPort   [ $portObj cget -handle ]
 	# } ] } {
@@ -1113,16 +1126,19 @@ body MldHost::config { args } {
     global errorInfo
     global errNumber
     set tag "body MldHost::config [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 	
 	set version "1"
-#param collection
-Deputs "Args:$args "
+	#param collection
+	Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
             -force_leave {
             	set force_leave $value
+            }
+            -force_simple_join {
+            	set force_simple_join $value
             }
             -force_robust_join {			
             	set force_robust_join $value
@@ -1251,7 +1267,7 @@ Deputs "Step10"
     }
     
     if { [ info exists vlan_id1 ] } {
-Deputs Step20
+		Deputs Step20
 		set vlanId	$vlan_id1
 		set int_cnt [ llength $interface ]
 		if { $int_cnt > 0 && $int_cnt == $count } {
@@ -1266,7 +1282,7 @@ Deputs Step20
 			}	
 
     	} else {
-Deputs "Bad count of interface...$int_cnt"
+			Deputs "Bad count of interface...$int_cnt"
     	}
     }
     
@@ -1293,8 +1309,6 @@ Deputs "Bad count of interface...$int_cnt"
     	}
     }
 
-
-
 	#-- enable mld emulation
 	ixNet setA $hPort/protocols/mld -enabled True
 	ixNet commit
@@ -1311,30 +1325,31 @@ Deputs "int len:[ llength $interface ]"
 					-enabled True 
 				ixNet commit
 				lappend handle [ixNet remapIds $host]
- Deputs "handle:$handle"		
+				Deputs "handle:$handle"		
 			}
 		}
 	}
 
-
-# -gqResponseMode True \
-# -interfaceIndex 1 \
-# -reportFreq 120 \
-# -respToQueryImmediately False \
-# -routerAlert True \
-# -sqResponseMode True \
-# -suppressReports False \
-# -upResponseMode False \
-# -version igmpv2    
+	# -gqResponseMode True \
+	# -interfaceIndex 1 \
+	# -reportFreq 120 \
+	# -respToQueryImmediately False \
+	# -routerAlert True \
+	# -sqResponseMode True \
+	# -suppressReports False \
+	# -upResponseMode False \
+	# -version igmpv2    
 
 	foreach h $handle {
 		if { [ info exists version ] } {
 			switch $version {
 			    1 -
+				mldv1 -
 				v1 {
 					set ixversion version1
 				}
 				2 -
+				mldv2 -
 				v2 {
 					set ixversion version2
 				}
@@ -1365,11 +1380,10 @@ Deputs "int len:[ llength $interface ]"
 }	
 body MldHost::join_group { args } {
     global errNumber
-    set group_list	[ list ]
-	array set group_handle [list]
-    set tag "body MldHost::join_group [info script]"
-Deputs "----- TAG: $tag -----"
 
+    set tag "body MldHost::join_group [info script]"
+	Deputs "----- TAG: $tag -----"
+	Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -1391,22 +1405,30 @@ Deputs "----- TAG: $tag -----"
 	
 	if { [ info exists groupList ] } {
 		foreach group $groupList {
-	Deputs Step10
+			Deputs Step10
 			if { [ $group isa MulticastGroup ] == 0 } {
 				return [ GetErrorReturnHeader "Invalid MultcastGroup object... $group" ]
 			}
-	Deputs Step20
+			Deputs Step20
 			set grpIndex [ lsearch $group_list $group ]
 			if { $grpIndex >= 0 } {
-	Deputs Step30
-				foreach hMld $handle {
-
-					set hGroup	$group_handle($group,$hMld)
+				Deputs Step30
+				set group_ip [ $group cget -group_ip ]
+				set group_num [ $group cget -group_num ]
+				set group_step [ $group cget -group_step ]
+				Deputs "************group_step: $group_step"
+				foreach hIgmp $handle {
+					set hGroup	$group_handle($group,$hIgmp)
 					ixNet setA $hGroup -enabled True
+					ixNet setM $hGroup \
+						-enabled True \
+						-groupCount $group_num \
+						-groupIpFrom $group_ip \
+						-incrementStep $group_step 						
 					ixNet commit
 				}
 			} else {
-	Deputs Step40
+				Deputs Step40
 				set filter_mode [ $group cget -filter_mode ]
 				set group_ip [ $group cget -group_ip ]
 				set group_num [ $group cget -group_num ]
@@ -1416,8 +1438,8 @@ Deputs "----- TAG: $tag -----"
 				set source_num [ $group cget -source_num ]
 				set source_step [ $group cget -source_step ]
 				set source_modbit [ $group cget -source_modbit ]
-	Deputs "=group prop= filter_mode:$filter_mode group_ip:$group_ip group_num:$group_num group_step:$group_step group_modbit:$group_modbit source_ip:$source_ip source_num:$source_num source_step:$source_step source_modbit:$source_modbit"
-	Deputs Step45
+				Deputs "=group prop= filter_mode:$filter_mode group_ip:$group_ip group_num:$group_num group_step:$group_step group_modbit:$group_modbit source_ip:$source_ip source_num:$source_num source_step:$source_step source_modbit:$source_modbit"
+				Deputs Step45
 				foreach hMld $handle {
 					set hGroup [ ixNet add $hMld groupRange ]
 					ixNet setM $hGroup \
@@ -1428,14 +1450,14 @@ Deputs "----- TAG: $tag -----"
 						-sourceMode $filter_mode
 					ixNet commit
 					set hGroup [ ixNet remapIds $hGroup ]
-		Deputs Step50			
-		Deputs "group handle:$hGroup"
-		Deputs "group handle array names: [ array names group_handle ]"
+					Deputs Step50			
+					Deputs "group handle:$hGroup"
+					Deputs "group handle array names: [ array names group_handle ]"
 					set group_handle($group,$hMld) $hGroup
-		Deputs Step60
+					Deputs Step60
 					lappend group_list $group
-		Deputs "group handle names:[ array names group_handle ]"
-		Deputs "group list:$group_list"
+					Deputs "group handle names:[ array names group_handle ]"
+					Deputs "group list:$group_list"
 					$group configure -handle $hGroup
 					# $group configure -portObj $portObj
 					# $group configure -hPort $hPort
@@ -1445,7 +1467,7 @@ Deputs "----- TAG: $tag -----"
 		}
 	}
 
-	start
+	#start
 	return [ GetStandardReturnHeader ]
 }
 

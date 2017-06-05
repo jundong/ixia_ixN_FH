@@ -784,9 +784,7 @@ proc GetStandardReturnBody { key value } {
 # GetPrefixV4Step 32 1 => 1
 # GetPrefixV4Step 24 1 => 256
 proc GetPrefixV4Step { pfx { step 1 } } {
-	
-	return [ IntTrans [ expr pow(2, 32 - $pfx) * $step ] ]
-	
+   return [ IntTrans [ expr pow(2, 32 - $pfx) * $step ] ]
 }
 
 proc IncrMacAddr { mac1 { mac2 00:00:00:00:00:01 } } {
